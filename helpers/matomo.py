@@ -1,0 +1,40 @@
+import logging
+import os
+from datetime import UTC, datetime
+
+import httpx
+
+from helpers.logging import MAIN_LOGGER_NAME
+
+MATOMO_URL = os.getenv("MATOMO_URL")
+MATOMO_SITE_ID = os.getenv("MATOMO_SITE_ID")
+MATOMO_AUTH_TOKEN = os.getenv("MATOMO_AUTH_TOKEN")
+
+_client = httpx.AsyncClient(timeout=1.5)
+
+
+async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
+    """
+    Sends an asynchronous tracking request to Matomo.
+    Fired in the background to avoid blocking the MCP server response.
+    Skipped when MATOMO_URL or MATOMO_SITE_ID is unset.
+    """
+    if not MATOMO_URL or not MATOMO_SITE_ID:
+        return
+
+    user_agent: str = headers.get("user-agent", "")
+
+    payload: dict = {
+        "idsite": MATOMO_SITE_ID,
+        "rec": 1,
+        "url": url,
+        "action_name": f"MCP Request: {path}",
+        "token_auth": MATOMO_AUTH_TOKEN,
+        "ua": user_agent,
+        "rand": datetime.now(UTC).timestamp(),
+    }
+
+    try:
+        await _client.post(f"{MATOMO_URL}/matomo.php", data=payload)
+    except Exception as e:
+        logging.getLogger(MAIN_LOGGER_NAME).error(f"Matomo tracking failed: {e}")

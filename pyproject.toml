@@ -1,0 +1,38 @@
+[project]
+name = "datos-es-mcp"
+dynamic = ["version"]
+description = "Model Context Protocol (MCP) server for interacting with Spanish open data (datos.gob.es, INE, Banco de España, AEMET, BOE, and more) via LLM chatbots"
+authors = [{ name = "datos-es-mcp contributors" }]
+readme = "README.md"
+requires-python = ">=3.13,<3.15"
+dependencies = [
+    "httpx>=0.28.0",
+    "mcp>=1.25.0,<2",
+    "pyyaml>=6.0",
+    "sentry-sdk>=2.54.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.0",
+    "pytest-httpx>=0.35.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.14.0",
+    "ty>=0.0.18",
+]
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
