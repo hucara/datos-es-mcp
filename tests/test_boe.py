@@ -2,6 +2,8 @@
 Tests for the BOE (Boletín Oficial del Estado) client.
 """
 
+import re
+
 import pytest
 from pytest_httpx import HTTPXMock
 
@@ -61,7 +63,7 @@ def sample_legislation_search():
 @pytest.mark.asyncio
 async def test_get_boe_summary(httpx_mock: HTTPXMock, sample_boe_summary):
     httpx_mock.add_response(
-        url="https://www.boe.es/datosabiertos/api/boe/sumario/20241201",
+        url=re.compile(r"https://www\.boe\.es/datosabiertos/api/boe/sumario/20241201"),
         json=sample_boe_summary,
     )
 
@@ -74,8 +76,9 @@ async def test_get_boe_summary(httpx_mock: HTTPXMock, sample_boe_summary):
 @pytest.mark.asyncio
 async def test_search_legislation(httpx_mock: HTTPXMock, sample_legislation_search):
     httpx_mock.add_response(
-        url="https://www.boe.es/datosabiertos/api/legislacion-consolidada",
-        match_querystring=False,
+        url=re.compile(
+            r"https://www\.boe\.es/datosabiertos/api/legislacion-consolidada"
+        ),
         json=sample_legislation_search,
     )
 

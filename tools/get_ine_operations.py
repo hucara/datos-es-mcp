@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers.cache import metadata_cache
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 
@@ -27,6 +28,8 @@ def register_get_ine_operations_tool(mcp: FastMCP) -> None:
             search: Optional keyword filter applied to operation names and codes.
             page: Page number (default: 1, 50 results per page).
         """
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             ops = await metadata_cache.get_ine_operations()
         except Exception as e:  # noqa: BLE001
@@ -35,13 +38,16 @@ def register_get_ine_operations_tool(mcp: FastMCP) -> None:
         if search:
             search_lower = search.lower()
             ops = [
-                op for op in ops
+                op
+                for op in ops
                 if search_lower in (op.get("Nombre") or "").lower()
                 or search_lower in (op.get("Codigo") or "").lower()
             ]
 
         if not ops:
-            msg = "No INE operations found" + (f" matching '{search}'" if search else "")
+            msg = "No INE operations found" + (
+                f" matching '{search}'" if search else ""
+            )
             return msg
 
         # Paginate in-memory (50 per page)
@@ -56,7 +62,8 @@ def register_get_ine_operations_tool(mcp: FastMCP) -> None:
         content_parts = [
             f"INE Statistical Operations (page {page}, {page_size}/page):",
             f"Showing {len(page_ops)} of {total} operation(s)"
-            + (f" matching '{search}'" if search else "") + ":\n",
+            + (f" matching '{search}'" if search else "")
+            + ":\n",
         ]
 
         for op in page_ops:
@@ -82,4 +89,5 @@ def register_get_ine_operations_tool(mcp: FastMCP) -> None:
         content_parts.append(
             "\nUse query_ine_data with the operation code to retrieve statistical data."
         )
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

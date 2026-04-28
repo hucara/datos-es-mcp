@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import regional_contracts_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 _ALL_REGIONS = regional_contracts_client.list_regions()
@@ -23,7 +24,7 @@ def _format_datasets(
         notes = (ds.get("notes") or ds.get("description") or "")[:250]
         resources = ds.get("resources") or []
         modified = ds.get("metadata_modified") or ds.get("last_modified") or ""
-        org = (ds.get("organization") or {})
+        org = ds.get("organization") or {}
         org_title = (
             org.get("title") if isinstance(org, dict) else str(org or "")
         ) or ""
@@ -45,9 +46,7 @@ def _format_datasets(
                 lines.append(f"   [{fmt}] {name}: {url}")
 
         if source == "datos_gob_es":
-            lines.append(
-                f"   Portal: https://datos.gob.es/es/catalogo/{ds_name}"
-            )
+            lines.append(f"   Portal: https://datos.gob.es/es/catalogo/{ds_name}")
         lines.append("")
     return lines
 
@@ -91,6 +90,9 @@ def register_search_regional_contracts_tool(mcp: FastMCP) -> None:
           - Valencia contracts: https://contratacion.gva.es
           - National (PLACE):   https://contrataciondelestado.es
         """
+        _urls: list[str] = []
+        url_capture.set(_urls)
+
         regions_to_search = _ALL_REGIONS if region == "all" else [region]
 
         if region != "all" and region not in _ALL_REGIONS:
@@ -173,4 +175,5 @@ def register_search_regional_contracts_tool(mcp: FastMCP) -> None:
             "National procurement platform: https://contrataciondelestado.es\n"
             "National open data catalog: https://datos.gob.es"
         )
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

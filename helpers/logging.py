@@ -18,7 +18,9 @@ class _JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         payload: dict[str, Any] = {
-            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
+            "timestamp": datetime.fromtimestamp(
+                record.created, tz=timezone.utc
+            ).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -31,10 +33,10 @@ class _JsonFormatter(logging.Formatter):
 def _build_logging_config(fmt: str) -> dict:
     if fmt == "json":
         formatter_cfg = {"()": _JsonFormatter}
-        text_fmt = None
     else:
-        formatter_cfg = {"format": "%(asctime)s | %(levelname)s | %(name)s | %(message)s"}
-        text_fmt = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+        formatter_cfg = {
+            "format": "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+        }
 
     return {
         "version": 1,

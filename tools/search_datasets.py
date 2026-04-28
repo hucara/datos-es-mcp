@@ -3,6 +3,7 @@ import logging
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datos_gob_es_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
 from helpers.publishers import find_publisher
 
@@ -53,24 +54,42 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
         Search for datasets in the datos.gob.es catalog (90,000+ Spanish open datasets).
 
         This is the starting point for discovering Spanish public data.
-        Use specific keywords; the API uses AND logic so generic words like "datos"
-        may return zero results.
+        The API searches by title keyword, so use a single distinctive noun
+        (e.g. "hipotecas", "IRPF", "afiliados") rather than multi-word phrases.
+        Generic words like "datos", "precio", "estadistica" are automatically
+        skipped to find a more specific keyword.
+
+        For data from specific well-known sources use dedicated tools instead:
+          - INE data     → get_ine_operations + query_ine_data
+          - BdE rates    → get_bde_series
+          - Eurostat     → get_eurostat_data
+          - AEAT fiscal  → get_aeat_stats
+          - Ministerios  → get_housing_stats / get_health_stats / get_social_security_stats / etc.
+          - REData energy → get_energy_data
+          - BOE/Legislación → get_boe_summary / search_legislation
 
         Args:
-            query: Search keywords (e.g. "paro registrado", "contaminacion aire Madrid").
-            theme: NTI sector filter. Common values:
-                   "sector-publico", "economia", "medio-ambiente", "transporte",
-                   "educacion", "salud", "ciencia-tecnologia", "vivienda",
-                   "hacienda", "justicia", "turismo", "empleo", "agricultura".
-            publisher: Publisher name or slug. Accepts common names like "INE",
-                       "AEMET", "Ministerio de Sanidad", "Comunidad de Madrid", etc.
-                       Also accepts raw CKAN slugs like "instituto-nacional-de-estadistica".
-            format: File format filter (e.g. "CSV", "JSON", "XML", "XLSX").
+            query: Search keyword or phrase. The first distinctive word is used
+                   for title matching (e.g. "hipotecas vivienda" → searches "hipotecas").
+                   Good examples: "IRPF", "afiliados", "hipotecas", "contaminacion",
+                   "matriculaciones", "licitaciones".
+            theme: NTI sector filter (ignored by current API — pass None).
+            publisher: Publisher code on datos.gob.es (e.g. "EA0028512" for AEAT,
+                       "EA0010587" for INE). If provided, lists all datasets from
+                       that publisher instead of doing a title search.
+            format: Ignored by current API — filter results manually if needed.
             page: Page number (default: 1).
             page_size: Results per page (default: 20, max: 100).
 
         Typical workflow: search_datasets → get_dataset_info → list_dataset_resources.
+
+        Known publisher codes:
+          EA0028512 — AEAT (Agencia Tributaria)
+          EA0010587 — INE (Instituto Nacional de Estadística)
         """
+        _urls: list[str] = []
+        url_capture.set(_urls)
+
         # Resolve publisher alias to CKAN slug if needed
         resolved_publisher = publisher
         if publisher:
@@ -127,4 +146,5 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
             content_parts.append(f"   URL: {ds.get('url')}")
             content_parts.append("")
 
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

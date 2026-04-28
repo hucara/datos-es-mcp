@@ -5,17 +5,15 @@ WORKDIR /app
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Copy dependency files first for layer caching
+# Copy source code
 COPY pyproject.toml .
 COPY README.md .
-
-# Install dependencies
-RUN uv sync --no-dev --no-editable
-
-# Copy source code
 COPY main.py .
 COPY helpers/ helpers/
 COPY tools/ tools/
+
+# Install dependencies
+RUN uv sync --no-dev --no-editable
 
 # Expose the MCP server port
 EXPOSE 8000

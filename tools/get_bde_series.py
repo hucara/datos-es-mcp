@@ -1,26 +1,31 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import bde_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 # Curated reference for common BdE series codes
+# Codes verified via the BdE CSV downloads (ti_1_1.csv, ti_1_7.csv, be2001.csv)
+# and the BIEST browser at https://app.bde.es/bie_www/?Idioma=en
 _COMMON_SERIES = """
 Common Banco de España series codes:
-  Interest rates:
-    TI_1_2_1   — ECB deposit facility rate (monthly)
-    TI_1_1_1   — ECB main refinancing rate (monthly)
-    TI_1_3_1   — ECB marginal lending facility rate (monthly)
-    TI_2_1_1   — EURIBOR 1 month (daily)
-    TI_2_3_1   — EURIBOR 3 months (daily)
-    TI_2_12_1  — EURIBOR 12 months (daily)
-  Exchange rates:
-    TC_1_1_1   — EUR/USD exchange rate (daily)
-    TC_1_2_1   — EUR/GBP exchange rate (daily)
-    TC_1_3_1   — EUR/JPY exchange rate (daily)
-  Credit & banking:
-    BE_1_1_1   — Credit to private sector (monthly)
-    BE_1_2_1   — Deposits of private sector (monthly)
-  Find more series at: https://www.bde.es/webbe/en/estadisticas/
+  ECB monetary policy rates (daily, use time_range="12M" or "36M"):
+    D_DTFK09A0  — ECB main refinancing rate
+    D_DNBCEA72  — ECB marginal lending facility rate
+    D_DNBCEB72  — ECB deposit facility rate
+  EURIBOR (daily, use time_range="12M" or "36M"):
+    D_DNBAC172  — 1-month EURIBOR
+    D_DNBAD172  — 3-month EURIBOR
+    D_DNBAE172  — 6-month EURIBOR
+    D_DNBAF172  — 12-month EURIBOR
+    D_DNBAA572  — €STR overnight rate
+  Exchange rates (monthly, use time_range="60M" or "MAX"):
+    D_1PFJ1001  — EUR/USD (US dollars per euro, monthly mean)
+    D_1PFJ1004  — EUR/GBP (pounds per euro, monthly mean)
+    D_1PFJ1017  — EUR/JPY (yen per euro, monthly mean)
+  Find more series: download CSV files from
+    https://www.bde.es/webbe/es/estadisticas/compartido/datos/csv/
+    (e.g. ti_1_1.csv = ECB rates, ti_1_7.csv = EURIBOR, be2001.csv = FX rates)
 """
 
 
@@ -40,26 +45,34 @@ def register_get_bde_series_tool(mcp: FastMCP) -> None:
 
         Args:
             series_codes: Comma-separated BdE series codes
-                          (e.g. "TI_1_2_1" or "TI_1_1_1,TC_1_1_1").
-                          Use '#' in codes where needed (e.g. "BE_1_1_1").
-            time_range: Period of data to retrieve:
-                        - "30M"  — last 30 months (or 30 quarters/years)
-                        - "60M"  — last 60 months (default)
+                          (e.g. "D_DNBCEB72" or "D_DTFK09A0,D_DNBAD172").
+                          Use '#' in codes where needed (encode as %23 internally).
+            time_range: Period of data to retrieve. MUST match the series frequency:
+                        - "12M"  — last 12 months (use for daily series D_DNBC...)
+                        - "36M"  — last 36 months (use for daily series)
+                        - "30M"  — last 30 months (use for monthly/quarterly series)
+                        - "60M"  — last 60 months (default, monthly/quarterly)
                         - "MAX"  — all available history
-                        - "3M"   — last 3 months (for daily series)
                         - "2024" — data for a specific year
+                        Mismatched ranges return 412 errors. Use latest_only=True
+                        first to check frequency before requesting history.
             latest_only: If True, return only the most recent value per series
-                         instead of full history.
+                         instead of full history. Use to verify series exist and
+                         to check their frequency (codFrecuencia field).
 
         Common series codes:
-          TI_1_2_1  — ECB deposit facility rate
-          TI_1_1_1  — ECB main refinancing rate
-          TI_2_12_1 — EURIBOR 12 months
-          TC_1_1_1  — EUR/USD exchange rate
+          D_DNBCEB72  — ECB deposit facility rate (daily, use time_range="36M")
+          D_DTFK09A0  — ECB main refinancing rate (daily, use time_range="36M")
+          D_DNBAF172  — 12-month EURIBOR (daily, use time_range="12M")
+          D_DNBAD172  — 3-month EURIBOR (daily, use time_range="12M")
+          D_1PFJ1001  — EUR/USD exchange rate (monthly, use time_range="60M")
         """
         codes = [c.strip() for c in series_codes.split(",") if c.strip()]
         if not codes:
             return "Error: Provide at least one series code.\n" + _COMMON_SERIES
+
+        _urls: list[str] = []
+        url_capture.set(_urls)
 
         try:
             if latest_only:
@@ -70,7 +83,9 @@ def register_get_bde_series_tool(mcp: FastMCP) -> None:
                         "Check the series codes are valid.\n" + _COMMON_SERIES
                     )
 
-                content_parts = [f"Banco de España — Latest values for {len(data)} series:\n"]
+                content_parts = [
+                    f"Banco de España — Latest values for {len(data)} series:\n"
+                ]
                 for s in data:
                     desc = s.get("descripcionCorta") or s.get("serie") or "Unknown"
                     code = s.get("serie") or "?"
@@ -89,6 +104,7 @@ def register_get_bde_series_tool(mcp: FastMCP) -> None:
                     if trend:
                         content_parts.append(f"  Trend: {trend}")
                     content_parts.append("")
+                content_parts.append(source_footer(_urls))
                 return "\n".join(content_parts)
 
             else:
@@ -105,7 +121,12 @@ def register_get_bde_series_tool(mcp: FastMCP) -> None:
                     f"Banco de España — Historical data ({time_range}) for {len(data)} series:\n"
                 ]
                 for s in data:
-                    desc = s.get("descripcion") or s.get("descripcionCorta") or s.get("serie") or "Unknown"
+                    desc = (
+                        s.get("descripcion")
+                        or s.get("descripcionCorta")
+                        or s.get("serie")
+                        or "Unknown"
+                    )
                     code = s.get("serie") or "?"
                     symbol = s.get("simbolo") or ""
                     freq = s.get("codFrecuencia") or ""
@@ -133,9 +154,12 @@ def register_get_bde_series_tool(mcp: FastMCP) -> None:
                         for d, v in pairs:
                             content_parts.append(f"    {d}: {v}")
                         if len(dates) > 20:
-                            content_parts.append(f"    ... ({len(dates) - 20} earlier observations)")
+                            content_parts.append(
+                                f"    ... ({len(dates) - 20} earlier observations)"
+                            )
                     content_parts.append("")
 
+                content_parts.append(source_footer(_urls))
                 return "\n".join(content_parts)
 
         except Exception as e:  # noqa: BLE001

@@ -2,6 +2,8 @@
 Tests for the Banco de España (BdE) statistics client.
 """
 
+import re
+
 import pytest
 from pytest_httpx import HTTPXMock
 
@@ -45,8 +47,7 @@ def sample_history():
 @pytest.mark.asyncio
 async def test_get_latest_data(httpx_mock: HTTPXMock, sample_latest):
     httpx_mock.add_response(
-        url="https://app.bde.es/bierest/resources/srdatosapp/favoritas",
-        match_querystring=False,
+        url=re.compile(r"https://app\.bde\.es/bierest/resources/srdatosapp/favoritas"),
         json=sample_latest,
     )
 
@@ -60,8 +61,9 @@ async def test_get_latest_data(httpx_mock: HTTPXMock, sample_latest):
 @pytest.mark.asyncio
 async def test_get_series_history(httpx_mock: HTTPXMock, sample_history):
     httpx_mock.add_response(
-        url="https://app.bde.es/bierest/resources/srdatosapp/listaSeries",
-        match_querystring=False,
+        url=re.compile(
+            r"https://app\.bde\.es/bierest/resources/srdatosapp/listaSeries"
+        ),
         json=sample_history,
     )
 

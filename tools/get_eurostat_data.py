@@ -1,13 +1,12 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import eurostat_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 _CATALOG = eurostat_client.DATASET_CATALOG
 
-_TOPIC_HELP = "\n".join(
-    f'  "{k}" — {v["description"]}' for k, v in _CATALOG.items()
-)
+_TOPIC_HELP = "\n".join(f'  "{k}" — {v["description"]}' for k, v in _CATALOG.items())
 
 
 def _format_records(
@@ -36,7 +35,9 @@ def _format_records(
         lines.append(f"\n  {geo_label} ({geo}):")
 
         # Sort by time
-        sorted_recs = sorted(geo_records, key=lambda r: str(r.get("time") or r.get("TIME_PERIOD") or ""))
+        sorted_recs = sorted(
+            geo_records, key=lambda r: str(r.get("time") or r.get("TIME_PERIOD") or "")
+        )
         shown = sorted_recs[-max_per_geo:]
         for r in shown:
             period = r.get("time") or r.get("TIME_PERIOD") or "?"
@@ -100,6 +101,12 @@ def register_get_eurostat_data_tool(mcp: FastMCP) -> None:
             extra_filters: Additional dimension filters as "key=value" pairs
                            separated by "&" (e.g. "unit=PC_GDP&sex=T").
 
+        Data availability notes:
+          - Most annual series lag ~1 year: 2026 queries may return no data; use 2025.
+          - "wages" uses dataset earn_nt_net — requires no unit filter (uses currency=EUR).
+          - "poverty_inequality" uses ilc_di12 (Gini) — no unit filter needed.
+          - inflation_hicp is monthly; all others are annual unless noted.
+
         Examples for claim verification:
           - "Spain grew at double the EU average":
             get_eurostat_data("gdp_growth", "ES,EU27_2020", "2018", "2025")
@@ -111,6 +118,8 @@ def register_get_eurostat_data_tool(mcp: FastMCP) -> None:
             get_eurostat_data("fossil_fuel_imports", "ES,EU27_2020,DE,FR,IT", "2019", "2025")
         """
         geo_list = [g.strip() for g in geo.split(",") if g.strip()]
+        _urls: list[str] = []
+        url_capture.set(_urls)
 
         # Resolve topic to dataset code
         if topic == "custom":
@@ -128,7 +137,6 @@ def register_get_eurostat_data_tool(mcp: FastMCP) -> None:
             description = entry["description"]
             notes = entry.get("note", "")
         else:
-            valid = ", ".join(f'"{k}"' for k in _CATALOG)
             return (
                 f"Unknown topic '{topic}'. Available topics:\n{_TOPIC_HELP}\n\n"
                 f"Or use topic='custom' with dataset_code='<code>'."
@@ -142,9 +150,14 @@ def register_get_eurostat_data_tool(mcp: FastMCP) -> None:
                     k, v = part.split("=", 1)
                     filters[k.strip()] = v.strip()
 
-        # Add default unit filter from catalog if not overridden
-        if topic in _CATALOG and "unit" in _CATALOG[topic] and "unit" not in filters:
-            filters["unit"] = _CATALOG[topic]["unit"]
+        # Apply default filters from catalog (unit + any extra_defaults)
+        if topic in _CATALOG:
+            entry = _CATALOG[topic]
+            if "unit" in entry and "unit" not in filters:
+                filters["unit"] = entry["unit"]
+            for k, v in entry.get("extra_defaults", {}).items():
+                if k not in filters:
+                    filters[k] = v
 
         try:
             raw = await eurostat_client.get_dataset(
@@ -155,6 +168,13 @@ def register_get_eurostat_data_tool(mcp: FastMCP) -> None:
                 filters=filters if filters else None,
             )
         except Exception as e:  # noqa: BLE001
+            if "404" in str(e):
+                return (
+                    f"Dataset not found: '{code}' returned HTTP 404 — this code does not "
+                    "exist in Eurostat.\n"
+                    "Look up the correct code at https://ec.europa.eu/eurostat/databrowser/\n"
+                    f"Available named topics: {', '.join(sorted(_CATALOG.keys()))}"
+                )
             return (
                 f"Error fetching Eurostat data for '{topic}' (dataset: {code}): {e}\n"
                 "Tip: Some datasets require additional filters. "
@@ -165,7 +185,7 @@ def register_get_eurostat_data_tool(mcp: FastMCP) -> None:
 
         if not records:
             # Try returning raw metadata
-            label = (raw.get("label") or "")
+            label = raw.get("label") or ""
             dims = list((raw.get("dimension") or {}).keys())
             return (
                 f"No data returned for '{topic}' with geo={geo}, "
@@ -191,7 +211,6 @@ def register_get_eurostat_data_tool(mcp: FastMCP) -> None:
 
         content_parts.append(f"\nRecords: {len(records)}")
         content_parts.extend(_format_records(records, geo_list))
-        content_parts.append(
-            "\nData source: Eurostat (ec.europa.eu/eurostat)"
-        )
+        content_parts.append("\nData source: Eurostat (ec.europa.eu/eurostat)")
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

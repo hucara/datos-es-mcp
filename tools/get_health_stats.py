@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import ministerios_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 _MINISTERIO = "sanidad"
@@ -14,7 +15,6 @@ def _format_results(result: dict) -> str:
     count = result.get("count", 0)
     page = result.get("page", 1)
     stat_desc = result.get("stat_description", "")
-    query = result.get("effective_query", "")
 
     lines = [
         f"Ministerio de Sanidad / SNS — {info.get('name', '')}",
@@ -22,7 +22,9 @@ def _format_results(result: dict) -> str:
     ]
     if stat_desc:
         lines.append(f"Topic: {stat_desc}")
-    lines.append(f"\nFound {count} dataset(s) (page {page}, showing {len(datasets)}):\n")
+    lines.append(
+        f"\nFound {count} dataset(s) (page {page}, showing {len(datasets)}):\n"
+    )
 
     for i, ds in enumerate(datasets, 1):
         lines.append(f"{i}. {ds.get('title', 'Untitled')}")
@@ -85,6 +87,8 @@ def register_get_health_stats_tool(mcp: FastMCP) -> None:
           - SNS statistics portal: https://www.sanidad.gob.es/estadEstudios/
           - For EU comparisons use get_eurostat_data (HLTH_* datasets)
         """
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             result = await ministerios_client.search_ministerio_stats(
                 ministerio=_MINISTERIO,
@@ -93,7 +97,7 @@ def register_get_health_stats_tool(mcp: FastMCP) -> None:
                 period=period,
                 page=page,
             )
-            return _format_results(result)
+            return _format_results(result) + source_footer(_urls)
         except ValueError as e:
             return (
                 f"Invalid stat_type '{stat_type}'. "

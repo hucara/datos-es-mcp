@@ -2,19 +2,29 @@
 Tests for the INE (Instituto Nacional de Estadística) client.
 """
 
+import re
+
 import pytest
 from pytest_httpx import HTTPXMock
 
-from helpers.ine_client import list_operations, get_table_data, get_series_data
+from helpers.ine_client import get_series_data, get_table_data, list_operations
 
 
 @pytest.fixture
 def sample_operations():
     return [
-        {"Id": 25, "Nombre": "Índice de Precios de Consumo (IPC)", "Codigo": "IPC",
-         "Periodicidad": {"Nombre": "Mensual"}},
-        {"Id": 33, "Nombre": "Encuesta de Población Activa (EPA)", "Codigo": "EPA",
-         "Periodicidad": {"Nombre": "Trimestral"}},
+        {
+            "Id": 25,
+            "Nombre": "Índice de Precios de Consumo (IPC)",
+            "Codigo": "IPC",
+            "Periodicidad": {"Nombre": "Mensual"},
+        },
+        {
+            "Id": 33,
+            "Nombre": "Encuesta de Población Activa (EPA)",
+            "Codigo": "EPA",
+            "Periodicidad": {"Nombre": "Trimestral"},
+        },
     ]
 
 
@@ -38,8 +48,9 @@ def sample_table_data():
 @pytest.mark.asyncio
 async def test_list_operations(httpx_mock: HTTPXMock, sample_operations):
     httpx_mock.add_response(
-        url="https://servicios.ine.es/wstempus/js/ES/OPERACIONES_DISPONIBLES",
-        match_querystring=False,
+        url=re.compile(
+            r"https://servicios\.ine\.es/wstempus/js/ES/OPERACIONES_DISPONIBLES"
+        ),
         json=sample_operations,
     )
 
@@ -53,8 +64,7 @@ async def test_list_operations(httpx_mock: HTTPXMock, sample_operations):
 @pytest.mark.asyncio
 async def test_get_table_data(httpx_mock: HTTPXMock, sample_table_data):
     httpx_mock.add_response(
-        url="https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/50902",
-        match_querystring=False,
+        url=re.compile(r"https://servicios\.ine\.es/wstempus/js/ES/DATOS_TABLA/50902"),
         json=sample_table_data,
     )
 
@@ -75,8 +85,9 @@ async def test_get_series_data(httpx_mock: HTTPXMock):
         "Data": [{"Fecha": 1704067200000, "Valor": 112.4}],
     }
     httpx_mock.add_response(
-        url="https://servicios.ine.es/wstempus/js/ES/DATOS_SERIE/IPC251856",
-        match_querystring=False,
+        url=re.compile(
+            r"https://servicios\.ine\.es/wstempus/js/ES/DATOS_SERIE/IPC251856"
+        ),
         json=series_response,
     )
 

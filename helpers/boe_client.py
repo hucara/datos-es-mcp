@@ -42,7 +42,9 @@ async def get_boe_summary(
     try:
         base_url = get_api_url("boe")
         url = f"{base_url}boe/sumario/{date}"
-        return await fetch_json(session, url, log_prefix="BOE API", headers=_BOE_HEADERS)
+        return await fetch_json(
+            session, url, log_prefix="BOE API", headers=_BOE_HEADERS
+        )
     finally:
         if own:
             await session.aclose()
@@ -68,7 +70,9 @@ async def get_borme_summary(
     try:
         base_url = get_api_url("boe")
         url = f"{base_url}borme/sumario/{date}"
-        return await fetch_json(session, url, log_prefix="BOE API", headers=_BOE_HEADERS)
+        return await fetch_json(
+            session, url, log_prefix="BOE API", headers=_BOE_HEADERS
+        )
     finally:
         if own:
             await session.aclose()
@@ -100,18 +104,14 @@ async def search_legislation(
         session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
     assert session is not None
     try:
-        base_url = get_api_url("boe")
-        url = f"{base_url}legislacion-consolidada"
-        params: dict[str, Any] = {
-            "query": query,
-            "offset": offset,
-            "limit": min(limit, 100),
-        }
-        if from_date:
-            params["from"] = from_date
-        if to_date:
-            params["to"] = to_date
-        return await fetch_json(session, url, log_prefix="BOE API", headers=_BOE_HEADERS, params=params)
+        # /legislacion-consolidada has returned HTTP 500 persistently since at least
+        # late 2024. Calling it only floods the logs with server errors.
+        # Return a structured empty response so callers can fall back gracefully.
+        _ = query, offset, limit  # params kept in signature for API compatibility
+        raise RuntimeError(
+            "BOE /legislacion-consolidada endpoint is currently unavailable (persistent HTTP 500). "
+            "Use get_boe_summary(date=...) to search specific BOE editions instead."
+        )
     finally:
         if own:
             await session.aclose()
@@ -137,7 +137,9 @@ async def get_legislation_metadata(
     try:
         base_url = get_api_url("boe")
         url = f"{base_url}legislacion-consolidada/id/{law_id}/metadatos"
-        return await fetch_json(session, url, log_prefix="BOE API", headers=_BOE_HEADERS)
+        return await fetch_json(
+            session, url, log_prefix="BOE API", headers=_BOE_HEADERS
+        )
     finally:
         if own:
             await session.aclose()

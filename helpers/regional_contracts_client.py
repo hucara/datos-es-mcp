@@ -28,7 +28,6 @@ from typing import Any
 
 import httpx
 
-from helpers.env_config import get_api_url
 from helpers.http import fetch_json
 from helpers.logging import MAIN_LOGGER_NAME
 from helpers.user_agent import USER_AGENT
@@ -62,8 +61,6 @@ _REGIONAL_PORTALS: dict[str, dict] = {
         "contracts_portal_url": "https://contratacion.gva.es",
     },
 }
-
-
 
 
 async def search_regional_ckan(
@@ -107,7 +104,9 @@ async def search_regional_ckan(
             "start": (page - 1) * page_size,
             "sort": "metadata_modified desc",
         }
-        data = await fetch_json(session, url, log_prefix="Regional contracts", params=params)
+        data = await fetch_json(
+            session, url, log_prefix="Regional contracts", params=params
+        )
         result = data.get("result") or {}
         return {
             "results": result.get("results", []),
@@ -130,17 +129,17 @@ async def search_datos_gob_by_region(
     """
     Search datos.gob.es for procurement datasets from a specific regional publisher.
 
-    This is the fallback when the regional CKAN portal is unreachable or returns
-    sparse results. datos.gob.es aggregates datasets from all Spanish institutions.
+    Uses the datos.gob.es linked-data semantic API (publisher endpoint), NOT the
+    CKAN-style API which does not exist on this portal.
 
     Args:
         region: One of "madrid", "cataluña", "valencia".
-        query: Search terms.
+        query: Search terms (used as additional title keyword filter).
         page: Page number (1-based).
         page_size: Results per page.
 
     Returns:
-        CKAN search result dict.
+        Dict with {"results": [...], "count": N, "source": "datos_gob_es", "portal": {...}}.
     """
     if region not in _REGIONAL_PORTALS:
         raise ValueError(f"Unknown region '{region}'. Valid: {list(_REGIONAL_PORTALS)}")
@@ -154,21 +153,70 @@ async def search_datos_gob_by_region(
     assert session is not None
 
     try:
-        base_url = get_api_url("datos_gob_es")
-        url = f"{base_url}catalog/api/action/package_search"
-        contraction_query = f"contratacion {query}" if query else "contratacion licitaciones adjudicaciones"
+        # datos.gob.es semantic API: list all datasets from a publisher
+        # Endpoint: GET /apidata/catalog/dataset/publisher/{code}.json
+        url = f"https://datos.gob.es/apidata/catalog/dataset/publisher/{publisher}.json"
         params: dict[str, Any] = {
-            "q": contraction_query,
-            "fq": f'publisher_name:"{publisher}" OR organization:"{publisher}"',
-            "rows": min(page_size, 100),
-            "start": (page - 1) * page_size,
-            "sort": "metadata_modified desc",
+            "_pageSize": min(page_size, 50),
+            "_page": page - 1,
         }
-        data = await fetch_json(session, url, log_prefix="Regional contracts", params=params)
-        result = data.get("result") or {}
+        data = await fetch_json(
+            session, url, log_prefix="Regional contracts", params=params
+        )
+        items = (data.get("result") or {}).get("items") or []
+        total = (data.get("result") or {}).get("totalItems") or len(items)
+
+        # Filter by query keywords against title if provided
+        if query:
+            kw = query.lower().split()
+
+            def _matches(item: dict) -> bool:
+                titles = item.get("title") or []
+                title_text = " ".join(
+                    (t.get("_value") or "") for t in titles if isinstance(t, dict)
+                ).lower()
+                return any(k in title_text for k in kw)
+
+            items = [i for i in items if _matches(i)]
+
+        # Normalise items to a CKAN-like shape for the tool formatter
+        results = []
+        for item in items:
+            titles = item.get("title") or []
+            title = next(
+                (
+                    t.get("_value")
+                    for t in titles
+                    if isinstance(t, dict) and t.get("_lang") == "es"
+                ),
+                next((t.get("_value") for t in titles if isinstance(t, dict)), ""),
+            )
+            about = item.get("_about") or ""
+            dist = item.get("distribution") or []
+            resources = [
+                {
+                    "format": (d.get("format") or {}).get("value", "?").upper(),
+                    "url": d.get("accessURL") or "",
+                    "name": "Download",
+                }
+                for d in dist
+                if isinstance(d, dict)
+            ]
+            results.append(
+                {
+                    "title": title,
+                    "name": about.split("/")[-1] if about else "",
+                    "notes": (item.get("description") or [""])[0]
+                    if isinstance(item.get("description"), list)
+                    else item.get("description") or "",
+                    "metadata_modified": item.get("modified") or "",
+                    "resources": resources,
+                }
+            )
+
         return {
-            "results": result.get("results", []),
-            "count": result.get("count", 0),
+            "results": results,
+            "count": total,
             "source": "datos_gob_es",
             "portal": portal,
         }

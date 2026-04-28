@@ -1,0 +1,15 @@
+.venv
+.env
+**/__pycache__/
+*.pyc
+*.pyo
+.claude
+GEMINI.md
+.DS_Store
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.env.local
+*.egg-info/
+CLAUDE.md
+SKILL.md

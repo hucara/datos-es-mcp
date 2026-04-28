@@ -14,6 +14,8 @@ Covered institutions:
   Tráfico (DGT)    — Dirección General de Tráfico
   Seguridad Social — Ministerio de Inclusión, Seguridad Social y Migraciones (INSS)
   Justicia         — Ministerio de Justicia / estadísticas judiciales y penales
+
+Uses datos.gob.es semantic API (title/{keyword} endpoint).
 """
 
 import logging
@@ -21,8 +23,7 @@ from typing import Any
 
 import httpx
 
-from helpers.env_config import get_api_url
-from helpers.http import fetch_json
+from helpers import datos_gob_es_client
 from helpers.logging import MAIN_LOGGER_NAME
 from helpers.user_agent import USER_AGENT
 
@@ -130,7 +131,11 @@ _MINISTERIOS: dict[str, dict[str, Any]] = {
             "ministerio-de-transportes-movilidad-y-agenda-urbana",
         ],
         "portal_url": "https://www.mivau.gob.es/vivienda/estadisticas-y-publicaciones",
-        "ine_operations": ["IPVFN", "IPVA", "EH"],  # House price index, rental index, housing survey
+        "ine_operations": [
+            "IPVFN",
+            "IPVA",
+            "EH",
+        ],  # House price index, rental index, housing survey
         "stat_types": {
             "precios_vivienda": {
                 "query": "precio vivienda indice precios IPV compraventa transacciones",
@@ -314,6 +319,8 @@ async def search_ministerio_stats(
     """
     Search datos.gob.es for statistical datasets from a Spanish ministry.
 
+    Uses the datos.gob.es semantic API title/{keyword} endpoint.
+
     Args:
         ministerio: Registry key (e.g. "sanidad", "educacion", "vivienda",
                     "trafico", "seguridad_social", "justicia").
@@ -325,7 +332,7 @@ async def search_ministerio_stats(
         page_size: Results per page (max 100).
 
     Returns:
-        dict with "results" (list of CKAN datasets), "count", "page", "page_size",
+        dict with "results" (list of normalized datasets), "count", "page", "page_size",
         "ministerio_info" (name + portal URL), and "stat_description".
     """
     if ministerio not in _MINISTERIOS:
@@ -335,7 +342,6 @@ async def search_ministerio_stats(
         )
 
     cfg = _MINISTERIOS[ministerio]
-    publishers: list[str] = cfg["publishers"]
     stat_types: dict[str, dict] = cfg.get("stat_types", {})
 
     # Resolve stat_type
@@ -343,7 +349,7 @@ async def search_ministerio_stats(
     stat_cfg = stat_types.get(effective_stat, {})
     stat_description = stat_cfg.get("description", "")
 
-    # Build query
+    # Build query — use the curated query string (first meaningful keyword for title search)
     if custom_query:
         query = custom_query
     else:
@@ -358,59 +364,14 @@ async def search_ministerio_stats(
     assert session is not None
 
     try:
-        base_url = get_api_url("datos_gob_es")
-        url = f"{base_url}catalog/api/action/package_search"
-
-        # Build filter query for all known publisher slugs
-        publisher_filters = " OR ".join(
-            f'organization:"{p}"' for p in publishers
+        raw = await datos_gob_es_client.search_datasets(
+            query=query,
+            page=page,
+            page_size=min(page_size, 100),
+            session=session,
         )
-        params: dict[str, Any] = {
-            "q": query,
-            "fq": publisher_filters,
-            "rows": min(page_size, 100),
-            "start": (page - 1) * page_size,
-            "sort": "metadata_modified desc",
-        }
-
-        data = await fetch_json(
-            session, url, log_prefix=f"Ministerios/{ministerio}", params=params
-        )
-        result = data.get("result") or {}
-        raw_results = result.get("results", [])
-        count = result.get("count", len(raw_results))
-
-        # Normalize results
-        normalized = []
-        for ds in raw_results:
-            resources = ds.get("resources", [])
-            formats = list({
-                r.get("format", "").upper()
-                for r in resources
-                if r.get("format")
-            })
-            normalized.append(
-                {
-                    "id": ds.get("id"),
-                    "name": ds.get("name"),
-                    "title": ds.get("title") or ds.get("name", ""),
-                    "description": (ds.get("notes") or "")[:300],
-                    "organization": (ds.get("organization") or {}).get("title"),
-                    "formats": formats,
-                    "resources_count": len(resources),
-                    "last_modified": ds.get("metadata_modified"),
-                    "url": f"https://datos.gob.es/es/catalogo/{ds.get('name', ds.get('id', ''))}",
-                    "resources": [
-                        {
-                            "name": r.get("name") or r.get("description") or "File",
-                            "format": (r.get("format") or "").upper(),
-                            "url": r.get("url") or "",
-                            "size": r.get("size"),
-                        }
-                        for r in resources[:5]
-                    ],
-                }
-            )
+        normalized = raw.get("results", [])
+        count = raw.get("count", len(normalized))
 
         return {
             "results": normalized,

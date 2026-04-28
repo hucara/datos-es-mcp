@@ -1,20 +1,43 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import aemet_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 _SKY_STATES = {
-    "11": "Clear", "12": "Slightly cloudy", "13": "Partly cloudy",
-    "14": "Cloudy", "15": "Very cloudy", "16": "Overcast",
-    "17": "High clouds", "23": "Intervals of clouds and clear sky",
-    "24": "Cloudy with intervals", "25": "Very cloudy with intervals",
-    "26": "Overcast with intervals", "33": "Showers", "34": "Showers",
-    "35": "Showers", "36": "Showers", "43": "Occasional rain",
-    "44": "Occasional rain", "45": "Rain", "46": "Rain",
-    "51": "Thunderstorms", "52": "Thunderstorms", "53": "Thunderstorms",
-    "54": "Thunderstorms", "61": "Snow showers", "62": "Snow showers",
-    "63": "Snow", "64": "Snow", "71": "Frost", "72": "Sleet",
-    "73": "Hail", "74": "Hail", "81": "Fog", "82": "Fog",
+    "11": "Clear",
+    "12": "Slightly cloudy",
+    "13": "Partly cloudy",
+    "14": "Cloudy",
+    "15": "Very cloudy",
+    "16": "Overcast",
+    "17": "High clouds",
+    "23": "Intervals of clouds and clear sky",
+    "24": "Cloudy with intervals",
+    "25": "Very cloudy with intervals",
+    "26": "Overcast with intervals",
+    "33": "Showers",
+    "34": "Showers",
+    "35": "Showers",
+    "36": "Showers",
+    "43": "Occasional rain",
+    "44": "Occasional rain",
+    "45": "Rain",
+    "46": "Rain",
+    "51": "Thunderstorms",
+    "52": "Thunderstorms",
+    "53": "Thunderstorms",
+    "54": "Thunderstorms",
+    "61": "Snow showers",
+    "62": "Snow showers",
+    "63": "Snow",
+    "64": "Snow",
+    "71": "Frost",
+    "72": "Sleet",
+    "73": "Hail",
+    "74": "Hail",
+    "81": "Fog",
+    "82": "Fog",
     "83": "Mist",
 }
 
@@ -45,6 +68,8 @@ def register_get_weather_forecast_tool(mcp: FastMCP) -> None:
         Returns weather including temperature, precipitation probability,
         wind speed/direction, humidity, and sky conditions.
         """
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             if detail == "hourly":
                 data = await aemet_client.get_municipio_forecast_hourly(municipio_code)
@@ -116,7 +141,6 @@ def register_get_weather_forecast_tool(mcp: FastMCP) -> None:
                 sky_list = day.get("estadoCielo") or []
                 wind = day.get("viento") or []
                 humidity = day.get("humedadRelativa") or {}
-                snow_prob = day.get("cotaNieveProv") or []
 
                 content_parts.append(f"  {str(fecha)[:10]}:")
 
@@ -132,7 +156,11 @@ def register_get_weather_forecast_tool(mcp: FastMCP) -> None:
 
                 # Sky state (first interval of day)
                 if sky_list and isinstance(sky_list, list):
-                    sky_val = sky_list[0].get("value") if isinstance(sky_list[0], dict) else sky_list[0]
+                    sky_val = (
+                        sky_list[0].get("value")
+                        if isinstance(sky_list[0], dict)
+                        else sky_list[0]
+                    )
                     if sky_val:
                         content_parts.append(f"    Sky: {_sky_desc(str(sky_val))}")
 
@@ -140,10 +168,13 @@ def register_get_weather_forecast_tool(mcp: FastMCP) -> None:
                 if precip_prob and isinstance(precip_prob, list):
                     max_prob = max(
                         (int(p.get("value", 0)) if isinstance(p, dict) else 0)
-                        for p in precip_prob if p
+                        for p in precip_prob
+                        if p
                     )
                     if max_prob:
-                        content_parts.append(f"    Precipitation probability: {max_prob}%")
+                        content_parts.append(
+                            f"    Precipitation probability: {max_prob}%"
+                        )
 
                 # Wind
                 if wind and isinstance(wind, list) and wind[0]:
@@ -166,4 +197,5 @@ def register_get_weather_forecast_tool(mcp: FastMCP) -> None:
 
         content_parts.append("")
         content_parts.append("Data source: AEMET OpenData (opendata.aemet.es)")
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

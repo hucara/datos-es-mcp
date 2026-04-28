@@ -2,6 +2,7 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datos_gob_es_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 
@@ -18,6 +19,8 @@ def register_get_dataset_info_tool(mcp: FastMCP) -> None:
         Args:
             dataset_id: Dataset ID (UUID) or slug from datos.gob.es.
         """
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             data = await datos_gob_es_client.get_dataset_details(dataset_id)
 
@@ -49,12 +52,18 @@ def register_get_dataset_info_tool(mcp: FastMCP) -> None:
             # Themes
             themes = data.get("theme", [])
             if themes:
-                theme_labels = [t.get("label", t.get("id", "")) for t in themes if isinstance(t, dict)]
+                theme_labels = [
+                    t.get("label", t.get("id", ""))
+                    for t in themes
+                    if isinstance(t, dict)
+                ]
                 if theme_labels:
                     content_parts.append(f"Themes: {', '.join(theme_labels)}")
 
             # Tags
-            tags = [t.get("display_name", t.get("name", "")) for t in data.get("tags", [])]
+            tags = [
+                t.get("display_name", t.get("name", "")) for t in data.get("tags", [])
+            ]
             if tags:
                 content_parts.append(f"Tags: {', '.join(tags[:10])}")
 
@@ -96,6 +105,7 @@ def register_get_dataset_info_tool(mcp: FastMCP) -> None:
             if len(resources) > 10:
                 content_parts.append(f"  ... and {len(resources) - 10} more")
 
+            content_parts.append(source_footer(_urls))
             return "\n".join(content_parts)
 
         except httpx.HTTPStatusError as e:

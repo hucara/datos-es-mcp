@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 from mcp.server.fastmcp import FastMCP
 
 from helpers import place_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 _NS = {
@@ -25,6 +26,7 @@ def _parse_atom_entries(xml_text: str, keyword: str | None = None) -> list[dict]
     entries = []
 
     for entry in root.findall(f"{{{ns}}}entry"):
+
         def txt(tag: str) -> str:
             el = entry.find(f"{{{ns}}}{tag}")
             return el.text.strip() if el is not None and el.text else ""
@@ -36,26 +38,25 @@ def _parse_atom_entries(xml_text: str, keyword: str | None = None) -> list[dict]
         link_el = entry.find(f"{{{ns}}}link")
         link = link_el.get("href", "") if link_el is not None else ""
 
-        # Optional UBL fields
-        contracting = ""
-        amount = ""
-        cpv = ""
-
         # Search within content/summary for extra info
         content_el = entry.find(f"{{{ns}}}content")
-        content_text = content_el.text if content_el is not None and content_el.text else summary
+        content_text = (
+            content_el.text if content_el is not None and content_el.text else summary
+        )
 
         if keyword:
             kw_lower = keyword.lower()
             if kw_lower not in title.lower() and kw_lower not in content_text.lower():
                 continue
 
-        entries.append({
-            "title": title,
-            "updated": updated[:10] if updated else "",
-            "summary": (content_text or summary)[:300],
-            "link": link,
-        })
+        entries.append(
+            {
+                "title": title,
+                "updated": updated[:10] if updated else "",
+                "summary": (content_text or summary)[:300],
+                "link": link,
+            }
+        )
 
     return entries
 
@@ -87,6 +88,9 @@ def register_search_public_contracts_tool(mcp: FastMCP) -> None:
         Note: For detailed real-time tender search, visit
         https://contrataciondelestado.es directly.
         """
+        _urls: list[str] = []
+        url_capture.set(_urls)
+
         if source == "feed":
             try:
                 xml_text = await place_client.get_atom_feed()
@@ -103,7 +107,8 @@ def register_search_public_contracts_tool(mcp: FastMCP) -> None:
 
             content_parts = [
                 f"PLACE Live Feed — {len(entries)} tender notice(s)"
-                + (f" matching '{query}'" if query else "") + ":\n",
+                + (f" matching '{query}'" if query else "")
+                + ":\n",
             ]
             for i, e in enumerate(entries[:20], 1):
                 content_parts.append(f"{i}. {e['title']}")
@@ -118,11 +123,16 @@ def register_search_public_contracts_tool(mcp: FastMCP) -> None:
             content_parts.append(
                 "Full search: https://contrataciondelestado.es/wps/portal/plataforma"
             )
+            content_parts.append(source_footer(_urls))
             return "\n".join(content_parts)
 
         else:
             # Search datos.gob.es for procurement datasets
-            search_query = f"contratacion {query}" if query else "licitaciones contratacion publica"
+            search_query = (
+                f"contratacion {query}"
+                if query
+                else "licitaciones contratacion publica"
+            )
             try:
                 result = await place_client.search_datasets(query=search_query)
             except Exception as e:  # noqa: BLE001
@@ -146,7 +156,9 @@ def register_search_public_contracts_tool(mcp: FastMCP) -> None:
                 org = ds.get("organization") or ""
                 modified = ds.get("metadata_modified") or ""
                 resources = ds.get("resources", [])
-                fmt_list = list({r.get("format", "").upper() for r in resources if r.get("format")})
+                fmt_list = list(
+                    {r.get("format", "").upper() for r in resources if r.get("format")}
+                )
 
                 content_parts.append(f"{i}. {title}")
                 content_parts.append(f"   ID: {ds_id}")
@@ -164,4 +176,5 @@ def register_search_public_contracts_tool(mcp: FastMCP) -> None:
             content_parts.append(
                 "For live tender search: https://contrataciondelestado.es"
             )
+            content_parts.append(source_footer(_urls))
             return "\n".join(content_parts)

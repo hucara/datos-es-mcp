@@ -4,6 +4,8 @@
 
 Servidor [MCP (Model Context Protocol)](https://modelcontextprotocol.io) que permite a los asistentes de IA (Claude, ChatGPT, Gemini, etc.) consultar, explorar y analizar datos del ecosistema de datos abiertos de España directamente desde la conversación.
 
+Model Context Protocol (MCP) server for interacting with Spanish open data (datos.gob.es, INE, Banco de España, AEMET, BOE, and more) via LLM chatbots
+
 En lugar de navegar manualmente por portales gubernamentales, puedes simplemente preguntar cosas como «¿Cuál es la tasa de paro según el INE?», «¿Cuánto gasta España en sanidad respecto a la media europea?» o «¿Cuál es el ratio cotizantes/pensionistas de la Seguridad Social?» y obtener respuestas inmediatas respaldadas por fuentes oficiales.
 
 Incluye una herramienta especializada de **verificación de afirmaciones políticas** (`verify_claim`) que enruta cualquier declaración económica o política a las fuentes de datos autorizadas y genera un plan de verificación paso a paso.
@@ -228,7 +230,7 @@ Endpoints disponibles:
 
 | Herramienta | Descripción | Parámetros clave |
 |---|---|---|
-| `search_datasets` | Busca en los +90.000 datasets de datos.gob.es por palabras clave, tema NTI, organismo o formato. Acepta nombres comunes de institución («INE», «Ministerio de Sanidad») además de slugs CKAN. | `query`, `theme`, `publisher`, `format`, `page` |
+| `search_datasets` | Busca en los +90.000 datasets de datos.gob.es por título. Usa la API semántica (`title/{keyword}`): pasa **una sola palabra distintiva** como query (p.ej. `"hipotecas"`, `"afiliados"`, `"IRPF"`). Para publicadores conocidos usa `publisher` con el código de organismo (p.ej. `"EA0028512"` para AEAT). | `query`, `publisher` (código organismo), `page` |
 | `get_dataset_info` | Metadatos completos de un dataset: organismo, licencia, cobertura geográfica, frecuencia de actualización y lista de distribuciones. | `dataset_id` |
 | `list_dataset_resources` | Lista todos los ficheros descargables de un dataset con URL, formato, tamaño y fecha. Con `include_data=True` descarga y previsualiza CSV/JSON directamente (hasta `max_file_size_mb`, por defecto 10 MB). | `dataset_id`, `include_data`, `max_file_size_mb` |
 
@@ -369,6 +371,94 @@ El enrutamiento combina cuatro señales:
 
 ---
 
+## 🤖 Guía para modelos de IA
+
+Esta sección explica cómo usar el servidor de forma eficaz como modelo de IA.
+
+### Árbol de decisión: ¿qué herramienta usar?
+
+```
+¿Tengo una afirmación política/económica que verificar?
+  → verify_claim(...)   # Genera un plan; luego ejecuta las herramientas sugeridas
+
+¿Necesito series temporales macroeconómicas?
+  ├─ España vs. UE           → get_eurostat_data(topic=..., geo="ES,EU27_2020")
+  ├─ Solo España (INE)       → get_ine_operations → query_ine_data
+  └─ Tipos de interés/EURIBOR/FX → get_bde_series(series_codes=..., time_range=...)
+
+¿Necesito datos sectoriales del gobierno español?
+  ├─ Energía eléctrica       → get_energy_data(data_type=..., start_date=..., time_trunc=...)
+  ├─ Vivienda                → get_housing_stats(stat_type=...)
+  ├─ Sanidad                 → get_health_stats(stat_type=...)
+  ├─ Educación               → get_education_stats(stat_type=...)
+  ├─ Seguridad Social        → get_social_security_stats(stat_type=...)
+  ├─ Fiscalidad (AEAT)       → get_aeat_stats(stat_type=...)
+  ├─ DGT / tráfico           → get_traffic_stats(stat_type=...)
+  ├─ Justicia                → get_justice_stats(stat_type=...)
+  └─ Empleo SEPE             → get_employment_stats(stat_type=...)
+
+¿Necesito buscar legislación o el BOE?
+  ├─ Ley en vigor (por nombre) → search_legislation(query=...)  ⚠️ puede dar 500
+  └─ BOE de una fecha concreta → get_boe_summary(date="AAAAMMDD")
+
+¿Necesito buscar datasets genéricos?
+  ├─ Búsqueda por tema       → search_datasets(query="palabra_clave_distintiva")
+  └─ Dataset concreto        → search_datasets → get_dataset_info → list_dataset_resources
+
+¿Datos meteorológicos?
+  ├─ Predicción              → get_weather_forecast(municipality_code=...)
+  └─ Observaciones actuales  → get_weather_observations()
+```
+
+### Limitaciones conocidas
+
+| API | Problema | Mitigación |
+|-----|----------|------------|
+| BOE `/legislacion-consolidada` | Devuelve errores 500 persistentes (fallo del servidor del BOE) | Usa `get_boe_summary` con la fecha de publicación conocida |
+| datos.gob.es | Busca por **título** (una sola palabra clave); no es búsqueda de texto completo | Usa la palabra más distintiva de tu consulta |
+| Eurostat | Datos anuales con ~1 año de retraso; consultas de 2026 pueden devolver "No data" | Usa `until_year="2025"` para datos anuales |
+| BdE BIEST | El parámetro `time_range` debe coincidir con la frecuencia de la serie (diaria vs. mensual); una discordancia devuelve 412 | Usa `latest_only=True` primero para comprobar la frecuencia |
+| REData | `time_trunc="year"` acepta máx. 3 años; `time_trunc="month"` acepta máx. 2 años para algunos widgets | Ajusta el rango de fechas al límite del widget |
+
+### Consejos para `search_datasets`
+
+La API semántica de datos.gob.es busca por **coincidencia de título**. El cliente extrae automáticamente la primera palabra no genérica de tu consulta y la usa como keyword. Funciona mejor con sustantivos específicos:
+
+```
+✅ Bien:  "hipotecas"      → title/hipotecas.json
+✅ Bien:  "afiliados"      → title/afiliados.json
+✅ Bien:  "IRPF declarantes" → title/IRPF.json
+❌ Evitar: "estadisticas precio vivienda"  → la primera palabra no genérica es "vivienda"
+```
+
+### Consejos para `get_bde_series`
+
+Los códigos de series reales tienen formato `D_XXXXXXX`. Los códigos tipo `TI_1_2_1` no existen.
+
+```
+# Tipos BCE (diarios) — usa time_range="12M" o "36M"
+D_DTFK09A0  — tipo de refinanciación principal del BCE
+D_DNBCEA72  — facilidad de crédito marginal
+D_DNBCEB72  — facilidad de depósito
+
+# EURIBOR (diarios) — usa time_range="12M"
+D_DNBAF172  — EURIBOR 12 meses
+D_DNBAD172  — EURIBOR 3 meses
+
+# Tipos de cambio (mensuales) — usa time_range="60M"
+D_1PFJ1001  — EUR/USD
+D_1PFJ1004  — EUR/GBP
+```
+
+### Consejos para `get_energy_data` (REData)
+
+- Para comparaciones de varios años: `time_trunc="year"` con rango máx. 3 años
+- Para evolución mensual: `time_trunc="month"` con rango máx. 2 años
+- Usa `"installed_capacity"` + `time_trunc="year"` para verificar crecimiento de renovables
+- Usa `"generation_mix"` + `time_trunc="year"` para ver el gas como precio marginal
+
+---
+
 ## 🔍 Casos de uso
 
 ### Verificación de afirmaciones políticas con `verify_claim`
@@ -487,7 +577,8 @@ verify_claim(
 
 ```
 get_eurostat_data("unemployment", geo="ES,EU27_2020,PT,IT", since_year="2019")
-get_bde_series(series_codes="TI_1_2_1,TI_2_12_1", time_range="60M")
+get_bde_series(series_codes="D_DNBCEB72,D_DTFK09A0", time_range="36M")  # tipos BCE
+get_bde_series(series_codes="D_1PFJ1001", time_range="60M")              # EUR/USD
 query_ine_data(table_id="50902")   # IPC mensual
 ```
 
@@ -525,16 +616,20 @@ query_ine_data(table_id="50902")   # IPC mensual
 
 ### Tests automatizados con pytest
 
+El proyecto tiene **73 tests unitarios** (mocks HTTP) y **38 tests de integración** (APIs reales).
+
 ```shell
-# Ejecutar todos los tests
+# Tests unitarios (sin red)
 uv run pytest
 
-# Con salida detallada
-uv run pytest -v
+# Tests de integración contra APIs reales (requieren conexión)
+uv run pytest -m integration -v
 
-# Ejecutar un fichero concreto
+# Fichero concreto
 uv run pytest tests/test_ine.py
 ```
+
+Estado actual de integración: **34 pasan**, **4 se omiten** (BOE legislación-consolidada devuelve 500 de forma persistente en el servidor del BOE).
 
 ### Pruebas interactivas con MCP Inspector
 
@@ -606,7 +701,7 @@ datos-es-mcp/
 │   ├── cache.py                     # Caché de metadatos con TTL de 24 h
 │   ├── publishers.py                # Diccionario de publishers conocidos (60+ aliases)
 │   ├── env_config.py                # URLs de APIs por entorno
-│   ├── datos_gob_es_client.py       # API CKAN de datos.gob.es
+│   ├── datos_gob_es_client.py       # API semántica de datos.gob.es (title/{keyword})
 │   ├── ine_client.py                # API JSON del INE (Tempus3)
 │   ├── bde_client.py                # API de estadísticas del Banco de España
 │   ├── aemet_client.py              # AEMET OpenData (fetch en dos pasos)

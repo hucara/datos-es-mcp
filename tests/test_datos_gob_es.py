@@ -2,55 +2,64 @@
 Tests for datos.gob.es client and search tools.
 """
 
+import re
+
 import pytest
-import pytest_asyncio
 from pytest_httpx import HTTPXMock
 
-from helpers.datos_gob_es_client import search_datasets, get_dataset_details
+from helpers.datos_gob_es_client import get_dataset_details, search_datasets
 
 
-@pytest.fixture
-def ckan_search_response():
+def _semantic_response(items: list) -> dict:
+    """Wrap items in the datos.gob.es semantic API response envelope."""
     return {
-        "success": True,
+        "format": "linked-data-api",
+        "version": "0.2",
         "result": {
-            "count": 2,
-            "results": [
-                {
-                    "id": "test-id-1",
-                    "name": "test-dataset-1",
-                    "title": "Padrón Municipal 2023",
-                    "notes": "Cifras de población por municipio",
-                    "organization": {"title": "INE", "name": "ine"},
-                    "theme": [{"id": "sector-publico", "label": "Sector Público"}],
-                    "tags": [{"display_name": "padrón"}, {"display_name": "población"}],
-                    "resources": [
-                        {"id": "r1", "format": "CSV", "url": "https://example.com/data.csv"},
-                    ],
-                    "metadata_modified": "2024-01-15T10:00:00",
-                },
-                {
-                    "id": "test-id-2",
-                    "name": "test-dataset-2",
-                    "title": "Censo 2021",
-                    "notes": "Resultados del censo de población",
-                    "organization": {"title": "INE", "name": "ine"},
-                    "theme": [],
-                    "tags": [],
-                    "resources": [],
-                    "metadata_modified": "2022-06-01T00:00:00",
-                },
-            ],
+            "items": items,
+            "itemsPerPage": len(items),
+            "page": 0,
+            "totalResults": len(items),
         },
     }
 
 
+_SAMPLE_ITEMS = [
+    {
+        "_about": "https://datos.gob.es/catalogo/ea0010587-padron-municipal-2023",
+        "title": [{"_value": "Padrón Municipal 2023", "_lang": "es"}],
+        "description": [{"_value": "Cifras de población por municipio", "_lang": "es"}],
+        "publisher": "http://datos.gob.es/recurso/sector-publico/org/Organismo/EA0010587",
+        "distribution": [
+            {
+                "_about": "https://datos.gob.es/catalogo/ea0010587-padron-municipal-2023/resource/r1",
+                "accessURL": "https://example.com/data.csv",
+                "format": {"type": "http://purl.org/dc/terms/IMT", "value": "text/csv"},
+                "title": [{"_value": "Datos CSV", "_lang": "es"}],
+            }
+        ],
+        "issued": "2024-01-15T10:00:00",
+        "modified": "2024-01-15T10:00:00",
+        "keyword": [{"_value": "padrón"}, {"_value": "población"}],
+    },
+    {
+        "_about": "https://datos.gob.es/catalogo/ea0010587-censo-2021",
+        "title": [{"_value": "Censo 2021", "_lang": "es"}],
+        "description": [{"_value": "Resultados del censo de población", "_lang": "es"}],
+        "publisher": "http://datos.gob.es/recurso/sector-publico/org/Organismo/EA0010587",
+        "distribution": [],
+        "issued": "2022-06-01T00:00:00",
+        "modified": "2022-06-01T00:00:00",
+        "keyword": [],
+    },
+]
+
+
 @pytest.mark.asyncio
-async def test_search_datasets_returns_results(httpx_mock: HTTPXMock, ckan_search_response):
+async def test_search_datasets_returns_results(httpx_mock: HTTPXMock):
     httpx_mock.add_response(
-        url="https://datos.gob.es/catalog/api/action/package_search",
-        match_querystring=False,
-        json=ckan_search_response,
+        url=re.compile(r"https://datos\.gob\.es/apidata/catalog/dataset/title/padron"),
+        json=_semantic_response(_SAMPLE_ITEMS),
     )
 
     result = await search_datasets(query="padron municipal")
@@ -58,16 +67,15 @@ async def test_search_datasets_returns_results(httpx_mock: HTTPXMock, ckan_searc
     assert result["count"] == 2
     assert len(result["results"]) == 2
     assert result["results"][0]["title"] == "Padrón Municipal 2023"
-    assert result["results"][0]["organization"] == "INE"
+    assert result["results"][0]["organization"] == "EA0010587"
     assert "CSV" in result["results"][0]["formats"]
 
 
 @pytest.mark.asyncio
 async def test_search_datasets_empty(httpx_mock: HTTPXMock):
     httpx_mock.add_response(
-        url="https://datos.gob.es/catalog/api/action/package_search",
-        match_querystring=False,
-        json={"success": True, "result": {"count": 0, "results": []}},
+        url=re.compile(r"https://datos\.gob\.es/apidata/catalog/dataset/title/"),
+        json=_semantic_response([]),
     )
 
     result = await search_datasets(query="xxxxxxxxnotexisting")
@@ -78,25 +86,21 @@ async def test_search_datasets_empty(httpx_mock: HTTPXMock):
 
 @pytest.mark.asyncio
 async def test_get_dataset_details(httpx_mock: HTTPXMock):
+    # First attempt: publisher lookup fails (returns empty)
     httpx_mock.add_response(
-        url="https://datos.gob.es/catalog/api/action/package_show",
-        match_querystring=False,
-        json={
-            "success": True,
-            "result": {
-                "id": "test-id-1",
-                "name": "test-dataset-1",
-                "title": "Padrón Municipal 2023",
-                "notes": "Descripción completa",
-                "resources": [{"id": "r1", "format": "CSV"}],
-                "metadata_modified": "2024-01-15",
-                "license_title": "Creative Commons Attribution",
-            },
-        },
+        url=re.compile(
+            r"https://datos\.gob\.es/apidata/catalog/dataset/publisher/padron"
+        ),
+        json=_semantic_response([]),
+    )
+    # Second attempt: title lookup succeeds
+    httpx_mock.add_response(
+        url=re.compile(r"https://datos\.gob\.es/apidata/catalog/dataset/title/padron"),
+        json=_semantic_response([_SAMPLE_ITEMS[0]]),
     )
 
-    data = await get_dataset_details("test-id-1")
+    data = await get_dataset_details("padron")
 
-    assert data["id"] == "test-id-1"
+    assert "padron" in data["id"]
     assert data["title"] == "Padrón Municipal 2023"
     assert len(data["resources"]) == 1

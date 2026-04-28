@@ -7,6 +7,7 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datos_gob_es_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
 from helpers.user_agent import USER_AGENT
 
@@ -128,6 +129,8 @@ def register_list_dataset_resources_tool(mcp: FastMCP) -> None:
             max_file_size_mb: Maximum file size in MB to download when include_data=True.
                               Default: 10. Max recommended: 50.
         """
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             data = await datos_gob_es_client.get_dataset_details(dataset_id)
 
@@ -166,7 +169,9 @@ def register_list_dataset_resources_tool(mcp: FastMCP) -> None:
                         content_parts.append(f"   Size: {size}")
 
                 if r.get("last_modified"):
-                    content_parts.append(f"   Last modified: {str(r['last_modified'])[:10]}")
+                    content_parts.append(
+                        f"   Last modified: {str(r['last_modified'])[:10]}"
+                    )
                 url = r.get("url") or ""
                 if url:
                     content_parts.append(f"   URL: {url}")
@@ -181,6 +186,7 @@ def register_list_dataset_resources_tool(mcp: FastMCP) -> None:
 
                 content_parts.append("")
 
+            content_parts.append(source_footer(_urls))
             return "\n".join(content_parts)
 
         except Exception as e:  # noqa: BLE001

@@ -28,12 +28,23 @@ from helpers.logging import log_tool
 _ROUTING_RULES: list[dict] = [
     # ── GDP / Economic growth ──────────────────────────────────────────────
     {
-        "keywords": ["pib", "crecimiento económico", "crecimiento del pib", "gdp", "producto interior bruto", "contabilidad nacional"],
+        "keywords": [
+            "pib",
+            "crecimiento económico",
+            "crecimiento del pib",
+            "gdp",
+            "producto interior bruto",
+            "contabilidad nacional",
+        ],
         "category": "GDP / Economic Growth",
         "sources": [
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "gdp_growth", "geo": "ES,EU27_2020,DE,FR", "since_year": "2018"},
+                "args": {
+                    "topic": "gdp_growth",
+                    "geo": "ES,EU27_2020,DE,FR",
+                    "since_year": "2018",
+                },
                 "rationale": "Official EU-harmonised real GDP growth rates. Compare ES vs EU average.",
             },
             {
@@ -50,12 +61,25 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Inflation / Prices ─────────────────────────────────────────────────
     {
-        "keywords": ["inflación", "ipc", "indice de precios", "precio consumo", "cpi", "hicp", "encarecimiento", "sube el precio"],
+        "keywords": [
+            "inflación",
+            "ipc",
+            "indice de precios",
+            "precio consumo",
+            "cpi",
+            "hicp",
+            "encarecimiento",
+            "sube el precio",
+        ],
         "category": "Inflation / Consumer Prices",
         "sources": [
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "inflation_hicp", "geo": "ES,EU27_2020", "since_year": "2021"},
+                "args": {
+                    "topic": "inflation_hicp",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2021",
+                },
                 "rationale": "Eurostat HICP — harmonised EU inflation metric (monthly). Compare with EU avg.",
             },
             {
@@ -73,7 +97,18 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Housing prices ─────────────────────────────────────────────────────
     {
-        "keywords": ["precio vivienda", "precio de la vivienda", "piso", "hipoteca", "inmobiliario", "comprar casa", "alquiler", "desahucio", "ejecucion hipotecaria", "construccion vivienda"],
+        "keywords": [
+            "precio vivienda",
+            "precio de la vivienda",
+            "piso",
+            "hipoteca",
+            "inmobiliario",
+            "comprar casa",
+            "alquiler",
+            "desahucio",
+            "ejecucion hipotecaria",
+            "construccion vivienda",
+        ],
         "category": "Housing Prices",
         "sources": [
             {
@@ -83,7 +118,11 @@ _ROUTING_RULES: list[dict] = [
             },
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "house_prices", "geo": "ES,EU27_2020", "since_year": "2015"},
+                "args": {
+                    "topic": "house_prices",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2015",
+                },
                 "rationale": "Eurostat House Price Index (2015=100). Good for % change vs EU claims.",
             },
             {
@@ -101,12 +140,27 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Employment / Unemployment ──────────────────────────────────────────
     {
-        "keywords": ["paro", "desempleo", "tasa de paro", "empleo", "ocupados", "afiliados", "seguridad social", "epa", "activos", "parados"],
+        "keywords": [
+            "paro",
+            "desempleo",
+            "tasa de paro",
+            "empleo",
+            "ocupados",
+            "afiliados",
+            "seguridad social",
+            "epa",
+            "activos",
+            "parados",
+        ],
         "category": "Employment / Unemployment",
         "sources": [
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "unemployment", "geo": "ES,EU27_2020", "since_year": "2018"},
+                "args": {
+                    "topic": "unemployment",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2018",
+                },
                 "rationale": "Eurostat annual unemployment rates. Compare Spain vs EU average.",
             },
             {
@@ -129,12 +183,25 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Wages / Purchasing power ───────────────────────────────────────────
     {
-        "keywords": ["salario", "sueldo", "poder adquisitivo", "poder de compra", "smi", "salario mínimo", "nómina", "retribución"],
+        "keywords": [
+            "salario",
+            "sueldo",
+            "poder adquisitivo",
+            "poder de compra",
+            "smi",
+            "salario mínimo",
+            "nómina",
+            "retribución",
+        ],
         "category": "Wages / Purchasing Power",
         "sources": [
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "wages", "geo": "ES,EU27_2020,DE,FR", "since_year": "2018"},
+                "args": {
+                    "topic": "wages",
+                    "geo": "ES,EU27_2020,DE,FR",
+                    "since_year": "2018",
+                },
                 "rationale": "Eurostat earnings statistics. Compare Spain vs EU purchasing power.",
             },
             {
@@ -157,17 +224,33 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Electricity / Energy prices ────────────────────────────────────────
     {
-        "keywords": ["precio electricidad", "luz", "tarifa eléctrica", "pvpc", "factura luz", "precio energia", "precio kwh"],
+        "keywords": [
+            "precio electricidad",
+            "luz",
+            "tarifa eléctrica",
+            "pvpc",
+            "factura luz",
+            "precio energia",
+            "precio kwh",
+        ],
         "category": "Electricity Prices",
         "sources": [
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "electricity_prices_households", "geo": "ES,EU27_2020,DE,FR,IT", "since_year": "2019"},
+                "args": {
+                    "topic": "electricity_prices_households",
+                    "geo": "ES,EU27_2020,DE,FR,IT",
+                    "since_year": "2019",
+                },
                 "rationale": "Eurostat household electricity prices. For 'Spain X% above/below EU' claims.",
             },
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "electricity_prices_industry", "geo": "ES,EU27_2020,DE,FR,IT", "since_year": "2019"},
+                "args": {
+                    "topic": "electricity_prices_industry",
+                    "geo": "ES,EU27_2020,DE,FR,IT",
+                    "since_year": "2019",
+                },
                 "rationale": "Eurostat industrial/SME electricity prices.",
             },
             {
@@ -184,22 +267,44 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Renewable energy ───────────────────────────────────────────────────
     {
-        "keywords": ["renovable", "energía renovable", "solar", "eólica", "potencia instalada", "cobertura renovable", "descarbonización"],
+        "keywords": [
+            "renovable",
+            "energía renovable",
+            "solar",
+            "eólica",
+            "potencia instalada",
+            "cobertura renovable",
+            "descarbonización",
+        ],
         "category": "Renewable Energy",
         "sources": [
             {
                 "tool": "get_energy_data",
-                "args": {"data_type": "installed_capacity", "start_date": "2019-01-01T00:00", "end_date": "2026-12-31T23:59", "time_trunc": "year"},
+                "args": {
+                    "data_type": "installed_capacity",
+                    "start_date": "2019-01-01T00:00",
+                    "end_date": "2026-12-31T23:59",
+                    "time_trunc": "year",
+                },
                 "rationale": "REData installed capacity by technology per year.",
             },
             {
                 "tool": "get_energy_data",
-                "args": {"data_type": "generation_mix", "start_date": "2019-01-01T00:00", "end_date": "2025-12-31T23:59", "time_trunc": "year"},
+                "args": {
+                    "data_type": "generation_mix",
+                    "start_date": "2019-01-01T00:00",
+                    "end_date": "2025-12-31T23:59",
+                    "time_trunc": "year",
+                },
                 "rationale": "REData generation mix — renewable % of total generation per year.",
             },
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "renewable_share", "geo": "ES,EU27_2020", "since_year": "2015"},
+                "args": {
+                    "topic": "renewable_share",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2015",
+                },
                 "rationale": "Eurostat renewable share in final energy consumption (broader methodology).",
             },
         ],
@@ -211,17 +316,35 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Gas / fossil fuels ─────────────────────────────────────────────────
     {
-        "keywords": ["gas natural", "combustibles fósiles", "hidrocarburos", "gasoil", "gasolina", "dependencia energética", "precio marginal", "marginalista"],
+        "keywords": [
+            "gas natural",
+            "combustibles fósiles",
+            "hidrocarburos",
+            "gasoil",
+            "gasolina",
+            "dependencia energética",
+            "precio marginal",
+            "marginalista",
+        ],
         "category": "Gas / Fossil Fuels",
         "sources": [
             {
                 "tool": "get_energy_data",
-                "args": {"data_type": "generation_mix", "start_date": "2019-01-01T00:00", "end_date": "2025-12-31T23:59", "time_trunc": "year"},
+                "args": {
+                    "data_type": "generation_mix",
+                    "start_date": "2019-01-01T00:00",
+                    "end_date": "2025-12-31T23:59",
+                    "time_trunc": "year",
+                },
                 "rationale": "REData generation mix — shows gas's share of electricity generation per year.",
             },
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "fossil_fuel_imports", "geo": "ES,EU27_2020,DE,FR,IT", "since_year": "2018"},
+                "args": {
+                    "topic": "fossil_fuel_imports",
+                    "geo": "ES,EU27_2020,DE,FR,IT",
+                    "since_year": "2018",
+                },
                 "rationale": "Eurostat energy imports — track reduction in fossil fuel import dependency.",
             },
         ],
@@ -232,22 +355,42 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Public debt / deficit ──────────────────────────────────────────────
     {
-        "keywords": ["deuda pública", "deuda del estado", "déficit", "superávit", "presupuesto", "endeudamiento", "deuda pib", "transferencias comunidades", "financiación autonómica"],
+        "keywords": [
+            "deuda pública",
+            "deuda del estado",
+            "déficit",
+            "superávit",
+            "presupuesto",
+            "endeudamiento",
+            "deuda pib",
+            "transferencias comunidades",
+            "financiación autonómica",
+        ],
         "category": "Public Debt / Deficit",
         "sources": [
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "government_debt", "geo": "ES,EU27_2020", "since_year": "2018"},
+                "args": {
+                    "topic": "government_debt",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2018",
+                },
                 "rationale": "Eurostat Maastricht government debt (% of GDP). EU-comparable.",
             },
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "government_deficit", "geo": "ES,EU27_2020", "since_year": "2018"},
+                "args": {
+                    "topic": "government_deficit",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2018",
+                },
                 "rationale": "Eurostat government deficit/surplus (% of GDP).",
             },
             {
                 "tool": "search_datasets",
-                "args": {"query": "financiacion autonomica transferencias estado comunidades hacienda"},
+                "args": {
+                    "query": "financiacion autonomica transferencias estado comunidades hacienda"
+                },
                 "rationale": "Ministerio de Hacienda publishes annual data on fiscal transfers to regions.",
             },
         ],
@@ -259,7 +402,18 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Tax / Fiscal policy ────────────────────────────────────────────────
     {
-        "keywords": ["irpf", "impuesto renta", "tipo impositivo", "tramo fiscal", "exención", "tributar", "declaración renta", "iva", "impuesto valor añadido", "contribuyente"],
+        "keywords": [
+            "irpf",
+            "impuesto renta",
+            "tipo impositivo",
+            "tramo fiscal",
+            "exención",
+            "tributar",
+            "declaración renta",
+            "iva",
+            "impuesto valor añadido",
+            "contribuyente",
+        ],
         "category": "Tax / Fiscal Policy",
         "sources": [
             {
@@ -286,7 +440,14 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Public procurement / subsidies ─────────────────────────────────────
     {
-        "keywords": ["contratos públicos", "licitación", "subvención", "ayuda pública", "gasóleo agrario", "bono social"],
+        "keywords": [
+            "contratos públicos",
+            "licitación",
+            "subvención",
+            "ayuda pública",
+            "gasóleo agrario",
+            "bono social",
+        ],
         "category": "Public Procurement / Subsidies",
         "sources": [
             {
@@ -307,7 +468,22 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Legislative / Parliamentary ─────────────────────────────────────────
     {
-        "keywords": ["decreto", "ley", "norma", "aprobado", "parlamento", "congreso", "senado", "presupuestos generales", "reforma", "boe", "legislatura", "votó", "voto parlamentario", "impuesto al sol"],
+        "keywords": [
+            "decreto",
+            "ley",
+            "norma",
+            "aprobado",
+            "parlamento",
+            "congreso",
+            "senado",
+            "presupuestos generales",
+            "reforma",
+            "boe",
+            "legislatura",
+            "votó",
+            "voto parlamentario",
+            "impuesto al sol",
+        ],
         "category": "Legislation / Parliamentary",
         "sources": [
             {
@@ -329,13 +505,27 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Financial sector / Banking ──────────────────────────────────────────
     {
-        "keywords": ["banco", "beneficio bancario", "caixabank", "santander", "bbva", "sector financiero", "tipo interés", "euribor"],
+        "keywords": [
+            "banco",
+            "beneficio bancario",
+            "caixabank",
+            "santander",
+            "bbva",
+            "sector financiero",
+            "tipo interés",
+            "euribor",
+        ],
         "category": "Financial Sector / Banking",
         "sources": [
             {
                 "tool": "get_bde_series",
-                "args": {"series_codes": "TI_1_2_1,TI_2_12_1", "time_range": "60M"},
-                "rationale": "Banco de España series for ECB rate and 12-month EURIBOR.",
+                "args": {"series_codes": "D_DNBCEB72", "time_range": "36M"},
+                "rationale": "BdE BIEST — ECB deposit facility rate (daily, D_DNBCEB72). One series per request.",
+            },
+            {
+                "tool": "get_bde_series",
+                "args": {"series_codes": "D_DNBAF172", "time_range": "36M"},
+                "rationale": "BdE BIEST — 12-month EURIBOR (daily, D_DNBAF172). One series per request.",
             },
             {
                 "tool": "search_datasets",
@@ -351,7 +541,13 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Transport / Freight ────────────────────────────────────────────────
     {
-        "keywords": ["flete", "transporte marítimo", "camión", "costes transporte", "navieras"],
+        "keywords": [
+            "flete",
+            "transporte marítimo",
+            "camión",
+            "costes transporte",
+            "navieras",
+        ],
         "category": "Transport / Freight",
         "sources": [
             {
@@ -372,12 +568,24 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Income inequality / Poverty ────────────────────────────────────────
     {
-        "keywords": ["pobreza", "desigualdad", "gini", "decil", "percentil", "distribución renta", "condiciones de vida"],
+        "keywords": [
+            "pobreza",
+            "desigualdad",
+            "gini",
+            "decil",
+            "percentil",
+            "distribución renta",
+            "condiciones de vida",
+        ],
         "category": "Inequality / Poverty",
         "sources": [
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "poverty_inequality", "geo": "ES,EU27_2020", "since_year": "2015"},
+                "args": {
+                    "topic": "poverty_inequality",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2015",
+                },
                 "rationale": "Eurostat Gini coefficient — income inequality, comparable across EU.",
             },
             {
@@ -394,7 +602,23 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Healthcare ─────────────────────────────────────────────────────────
     {
-        "keywords": ["sanidad", "salud", "enfermera", "médico", "hospital", "sanitario", "personal sanitario", "camas hospitalarias", "pacientes", "sistema nacional de salud", "sns", "gasto sanitario", "lista de espera", "vacunacion", "vacuna"],
+        "keywords": [
+            "sanidad",
+            "salud",
+            "enfermera",
+            "médico",
+            "hospital",
+            "sanitario",
+            "personal sanitario",
+            "camas hospitalarias",
+            "pacientes",
+            "sistema nacional de salud",
+            "sns",
+            "gasto sanitario",
+            "lista de espera",
+            "vacunacion",
+            "vacuna",
+        ],
         "category": "Healthcare",
         "sources": [
             {
@@ -409,7 +633,12 @@ _ROUTING_RULES: list[dict] = [
             },
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "custom", "dataset_code": "hlth_rs_prshp", "geo": "ES,EU27_2020", "since_year": "2018"},
+                "args": {
+                    "topic": "custom",
+                    "dataset_code": "hlth_rs_prshp",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2018",
+                },
                 "rationale": "Eurostat healthcare personnel by category (nurses, physicians, dentists) — for EU comparisons.",
             },
             {
@@ -429,7 +658,21 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Education ──────────────────────────────────────────────────────────
     {
-        "keywords": ["abandono escolar", "fracaso escolar", "educacion", "educación", "matriculados", "universitarios", "titulados", "tasa escolar", "alumnos", "escolarización", "becas educacion", "gasto educativo", "formacion profesional"],
+        "keywords": [
+            "abandono escolar",
+            "fracaso escolar",
+            "educacion",
+            "educación",
+            "matriculados",
+            "universitarios",
+            "titulados",
+            "tasa escolar",
+            "alumnos",
+            "escolarización",
+            "becas educacion",
+            "gasto educativo",
+            "formacion profesional",
+        ],
         "category": "Education",
         "sources": [
             {
@@ -439,7 +682,12 @@ _ROUTING_RULES: list[dict] = [
             },
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "custom", "dataset_code": "edat_lfse_14", "geo": "ES,EU27_2020", "since_year": "2000"},
+                "args": {
+                    "topic": "custom",
+                    "dataset_code": "edat_lfse_14",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2000",
+                },
                 "rationale": "Eurostat early school leaving rate (% 18-24 with at most lower secondary) — historical series from 2000.",
             },
         ],
@@ -453,7 +701,18 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Social Security / Pensions ─────────────────────────────────────────
     {
-        "keywords": ["pensiones", "pensionistas", "cotizantes", "seguridad social", "sistema de pensiones", "jubilacion", "jubilación", "pensión media", "ratio pensionistas", "sostenibilidad pensiones"],
+        "keywords": [
+            "pensiones",
+            "pensionistas",
+            "cotizantes",
+            "seguridad social",
+            "sistema de pensiones",
+            "jubilacion",
+            "jubilación",
+            "pensión media",
+            "ratio pensionistas",
+            "sostenibilidad pensiones",
+        ],
         "category": "Social Security / Pensions",
         "sources": [
             {
@@ -473,7 +732,12 @@ _ROUTING_RULES: list[dict] = [
             },
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "custom", "dataset_code": "spr_exp_pens", "geo": "ES,EU27_2020", "since_year": "2010"},
+                "args": {
+                    "topic": "custom",
+                    "dataset_code": "spr_exp_pens",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2010",
+                },
                 "rationale": "Eurostat pension expenditure as % of GDP — for EU comparisons.",
             },
         ],
@@ -486,7 +750,17 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Traffic / Road safety ──────────────────────────────────────────────
     {
-        "keywords": ["accidentes trafico", "siniestralidad vial", "muertos en carretera", "fallecidos trafico", "victimas trafico", "seguridad vial", "parque vehiculos", "matriculaciones", "vehiculo electrico"],
+        "keywords": [
+            "accidentes trafico",
+            "siniestralidad vial",
+            "muertos en carretera",
+            "fallecidos trafico",
+            "victimas trafico",
+            "seguridad vial",
+            "parque vehiculos",
+            "matriculaciones",
+            "vehiculo electrico",
+        ],
         "category": "Traffic / Road Safety",
         "sources": [
             {
@@ -508,7 +782,20 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Justice / Crime ────────────────────────────────────────────────────
     {
-        "keywords": ["criminalidad", "delitos", "crimen", "delincuencia", "presos", "reclusos", "violencia genero", "femicidio", "feminicidio", "condenas", "corrupcion", "juzgados"],
+        "keywords": [
+            "criminalidad",
+            "delitos",
+            "crimen",
+            "delincuencia",
+            "presos",
+            "reclusos",
+            "violencia genero",
+            "femicidio",
+            "feminicidio",
+            "condenas",
+            "corrupcion",
+            "juzgados",
+        ],
         "category": "Justice / Crime",
         "sources": [
             {
@@ -531,7 +818,20 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Demographics ───────────────────────────────────────────────────────
     {
-        "keywords": ["nacimientos", "natalidad", "defunciones", "mortalidad", "población", "padrón", "migración", "inmigrantes", "migraciones", "demografía", "fecundidad", "esperanza de vida"],
+        "keywords": [
+            "nacimientos",
+            "natalidad",
+            "defunciones",
+            "mortalidad",
+            "población",
+            "padrón",
+            "migración",
+            "inmigrantes",
+            "migraciones",
+            "demografía",
+            "fecundidad",
+            "esperanza de vida",
+        ],
         "category": "Demographics",
         "sources": [
             {
@@ -541,7 +841,9 @@ _ROUTING_RULES: list[dict] = [
             },
             {
                 "tool": "search_datasets",
-                "args": {"query": "estadistica nacimientos defunciones demografica INE"},
+                "args": {
+                    "query": "estadistica nacimientos defunciones demografica INE"
+                },
                 "rationale": "INE demographic datasets on datos.gob.es — downloadable microdata and summary tables.",
             },
         ],
@@ -554,17 +856,32 @@ _ROUTING_RULES: list[dict] = [
     },
     # ── Business structure ─────────────────────────────────────────────────
     {
-        "keywords": ["pymes", "empresa", "tejido empresarial", "autónomos", "micropymes", "grandes empresas", "número de empresas"],
+        "keywords": [
+            "pymes",
+            "empresa",
+            "tejido empresarial",
+            "autónomos",
+            "micropymes",
+            "grandes empresas",
+            "número de empresas",
+        ],
         "category": "Business Structure",
         "sources": [
             {
                 "tool": "search_datasets",
-                "args": {"query": "directorio central empresas DIRCE INE estructura empresarial"},
+                "args": {
+                    "query": "directorio central empresas DIRCE INE estructura empresarial"
+                },
                 "rationale": "INE DIRCE (Directorio Central de Empresas) — official business census by size, sector, region.",
             },
             {
                 "tool": "get_eurostat_data",
-                "args": {"topic": "custom", "dataset_code": "sbs_sc_sca_r2", "geo": "ES,EU27_2020", "since_year": "2018"},
+                "args": {
+                    "topic": "custom",
+                    "dataset_code": "sbs_sc_sca_r2",
+                    "geo": "ES,EU27_2020",
+                    "since_year": "2018",
+                },
                 "rationale": "Eurostat SME statistics — share of enterprises by size class.",
             },
         ],
@@ -581,7 +898,9 @@ _ROUTING_RULES: list[dict] = [
 # Lookup index: category name → rule
 # ---------------------------------------------------------------------------
 
-_RULES_BY_CATEGORY: dict[str, dict] = {rule["category"]: rule for rule in _ROUTING_RULES}
+_RULES_BY_CATEGORY: dict[str, dict] = {
+    rule["category"]: rule for rule in _ROUTING_RULES
+}
 
 # ---------------------------------------------------------------------------
 # Thematic taxonomy routing
@@ -590,79 +909,110 @@ _RULES_BY_CATEGORY: dict[str, dict] = {rule["category"]: rule for rule in _ROUTI
 
 _TEMATIC_ROUTING: dict[str, list[str]] = {
     # ── Spanish canonical values ───────────────────────────────────────────
-    "economía":                ["GDP / Economic Growth", "Public Debt / Deficit", "Wages / Purchasing Power"],
-    "justicia_y_corrupción":   ["Legislation / Parliamentary", "Public Procurement / Subsidies"],
-    "medio_ambiente":          ["Renewable Energy", "Gas / Fossil Fuels"],
-    "energia":                 ["Electricity Prices", "Renewable Energy", "Gas / Fossil Fuels"],
-    "empleo":                  ["Employment / Unemployment", "Wages / Purchasing Power"],
-    "trabajo":                 ["Employment / Unemployment", "Wages / Purchasing Power"],
-    "política_social":         ["Employment / Unemployment", "Inequality / Poverty", "Demographics"],
-    "vivienda":                ["Housing Prices"],
-    "fiscalidad":              ["Tax / Fiscal Policy"],
-    "contratacion_publica":    ["Public Procurement / Subsidies"],
-    "transporte":              ["Transport / Freight"],
-    "presupuestos":            ["Public Debt / Deficit", "Legislation / Parliamentary"],
-    "sanidad":                 ["Healthcare"],
-    "educación":               ["Education"],
-    "educacion":               ["Education"],
-    "demografía":              ["Demographics"],
-    "demografia":              ["Demographics"],
-    "inflación":               ["Inflation / Consumer Prices"],
-    "inflacion":               ["Inflation / Consumer Prices"],
-    "banca":                   ["Financial Sector / Banking"],
-    "empresas":                ["Business Structure"],
-    "tejido_empresarial":      ["Business Structure"],
-    "desigualdad":             ["Inequality / Poverty"],
-    "pobreza":                 ["Inequality / Poverty"],
-    "pensiones":               ["Social Security / Pensions"],
-    "seguridad_social":        ["Social Security / Pensions"],
-    "trafico":                 ["Traffic / Road Safety"],
-    "tráfico":                 ["Traffic / Road Safety"],
-    "siniestralidad":          ["Traffic / Road Safety"],
-    "criminalidad":            ["Justice / Crime"],
-    "violencia_genero":        ["Justice / Crime"],
-    "legislacion":             ["Legislation / Parliamentary"],
-    "legislación":             ["Legislation / Parliamentary"],
-    "corrupcion":              ["Justice / Crime", "Legislation / Parliamentary", "Public Procurement / Subsidies"],
-    "corrupción":              ["Justice / Crime", "Legislation / Parliamentary", "Public Procurement / Subsidies"],
-    "impuestos":               ["Tax / Fiscal Policy"],
-    "tributos":                ["Tax / Fiscal Policy"],
-    "deuda":                   ["Public Debt / Deficit"],
-    "deficit":                 ["Public Debt / Deficit"],
-    "déficit":                 ["Public Debt / Deficit"],
-    "salarios":                ["Wages / Purchasing Power"],
-    "precios":                 ["Inflation / Consumer Prices", "Housing Prices"],
-    "electricidad":            ["Electricity Prices", "Renewable Energy"],
+    "economía": [
+        "GDP / Economic Growth",
+        "Public Debt / Deficit",
+        "Wages / Purchasing Power",
+    ],
+    "justicia_y_corrupción": [
+        "Legislation / Parliamentary",
+        "Public Procurement / Subsidies",
+    ],
+    "medio_ambiente": ["Renewable Energy", "Gas / Fossil Fuels"],
+    "energia": ["Electricity Prices", "Renewable Energy", "Gas / Fossil Fuels"],
+    "empleo": ["Employment / Unemployment", "Wages / Purchasing Power"],
+    "trabajo": ["Employment / Unemployment", "Wages / Purchasing Power"],
+    "política_social": [
+        "Employment / Unemployment",
+        "Inequality / Poverty",
+        "Demographics",
+    ],
+    "vivienda": ["Housing Prices"],
+    "fiscalidad": ["Tax / Fiscal Policy"],
+    "contratacion_publica": ["Public Procurement / Subsidies"],
+    "transporte": ["Transport / Freight"],
+    "presupuestos": ["Public Debt / Deficit", "Legislation / Parliamentary"],
+    "sanidad": ["Healthcare"],
+    "educación": ["Education"],
+    "educacion": ["Education"],
+    "demografía": ["Demographics"],
+    "demografia": ["Demographics"],
+    "inflación": ["Inflation / Consumer Prices"],
+    "inflacion": ["Inflation / Consumer Prices"],
+    "banca": ["Financial Sector / Banking"],
+    "empresas": ["Business Structure"],
+    "tejido_empresarial": ["Business Structure"],
+    "desigualdad": ["Inequality / Poverty"],
+    "pobreza": ["Inequality / Poverty"],
+    "pensiones": ["Social Security / Pensions"],
+    "seguridad_social": ["Social Security / Pensions"],
+    "trafico": ["Traffic / Road Safety"],
+    "tráfico": ["Traffic / Road Safety"],
+    "siniestralidad": ["Traffic / Road Safety"],
+    "criminalidad": ["Justice / Crime"],
+    "violencia_genero": ["Justice / Crime"],
+    "legislacion": ["Legislation / Parliamentary"],
+    "legislación": ["Legislation / Parliamentary"],
+    "corrupcion": [
+        "Justice / Crime",
+        "Legislation / Parliamentary",
+        "Public Procurement / Subsidies",
+    ],
+    "corrupción": [
+        "Justice / Crime",
+        "Legislation / Parliamentary",
+        "Public Procurement / Subsidies",
+    ],
+    "impuestos": ["Tax / Fiscal Policy"],
+    "tributos": ["Tax / Fiscal Policy"],
+    "deuda": ["Public Debt / Deficit"],
+    "deficit": ["Public Debt / Deficit"],
+    "déficit": ["Public Debt / Deficit"],
+    "salarios": ["Wages / Purchasing Power"],
+    "precios": ["Inflation / Consumer Prices", "Housing Prices"],
+    "electricidad": ["Electricity Prices", "Renewable Energy"],
     # ── English aliases (ExtractedClaim supports bilingual values) ─────────
-    "economy":                 ["GDP / Economic Growth", "Public Debt / Deficit", "Wages / Purchasing Power"],
-    "health":                  ["Healthcare"],
-    "healthcare":              ["Healthcare"],
-    "education":               ["Education"],
-    "environment":             ["Renewable Energy", "Gas / Fossil Fuels"],
-    "energy":                  ["Electricity Prices", "Renewable Energy", "Gas / Fossil Fuels"],
-    "employment":              ["Employment / Unemployment", "Wages / Purchasing Power"],
-    "labor":                   ["Employment / Unemployment", "Wages / Purchasing Power"],
-    "labour":                  ["Employment / Unemployment", "Wages / Purchasing Power"],
-    "housing":                 ["Housing Prices"],
-    "taxation":                ["Tax / Fiscal Policy"],
-    "fiscal_policy":           ["Tax / Fiscal Policy"],
-    "public_debt":             ["Public Debt / Deficit"],
-    "justice":                 ["Justice / Crime", "Legislation / Parliamentary"],
-    "crime":                   ["Justice / Crime"],
-    "corruption":              ["Justice / Crime", "Legislation / Parliamentary", "Public Procurement / Subsidies"],
-    "traffic":                 ["Traffic / Road Safety"],
-    "road_safety":             ["Traffic / Road Safety"],
-    "pensions":                ["Social Security / Pensions"],
-    "social_security":         ["Social Security / Pensions"],
-    "demographics":            ["Demographics"],
-    "social_policy":           ["Employment / Unemployment", "Inequality / Poverty", "Demographics"],
-    "inequality":              ["Inequality / Poverty"],
-    "poverty":                 ["Inequality / Poverty"],
-    "transport":               ["Transport / Freight"],
-    "business":                ["Business Structure"],
-    "inflation":               ["Inflation / Consumer Prices"],
-    "banking":                 ["Financial Sector / Banking"],
-    "procurement":             ["Public Procurement / Subsidies"],
+    "economy": [
+        "GDP / Economic Growth",
+        "Public Debt / Deficit",
+        "Wages / Purchasing Power",
+    ],
+    "health": ["Healthcare"],
+    "healthcare": ["Healthcare"],
+    "education": ["Education"],
+    "environment": ["Renewable Energy", "Gas / Fossil Fuels"],
+    "energy": ["Electricity Prices", "Renewable Energy", "Gas / Fossil Fuels"],
+    "employment": ["Employment / Unemployment", "Wages / Purchasing Power"],
+    "labor": ["Employment / Unemployment", "Wages / Purchasing Power"],
+    "labour": ["Employment / Unemployment", "Wages / Purchasing Power"],
+    "housing": ["Housing Prices"],
+    "taxation": ["Tax / Fiscal Policy"],
+    "fiscal_policy": ["Tax / Fiscal Policy"],
+    "public_debt": ["Public Debt / Deficit"],
+    "justice": ["Justice / Crime", "Legislation / Parliamentary"],
+    "crime": ["Justice / Crime"],
+    "corruption": [
+        "Justice / Crime",
+        "Legislation / Parliamentary",
+        "Public Procurement / Subsidies",
+    ],
+    "traffic": ["Traffic / Road Safety"],
+    "road_safety": ["Traffic / Road Safety"],
+    "pensions": ["Social Security / Pensions"],
+    "social_security": ["Social Security / Pensions"],
+    "demographics": ["Demographics"],
+    "social_policy": [
+        "Employment / Unemployment",
+        "Inequality / Poverty",
+        "Demographics",
+    ],
+    "inequality": ["Inequality / Poverty"],
+    "poverty": ["Inequality / Poverty"],
+    "transport": ["Transport / Freight"],
+    "business": ["Business Structure"],
+    "inflation": ["Inflation / Consumer Prices"],
+    "banking": ["Financial Sector / Banking"],
+    "procurement": ["Public Procurement / Subsidies"],
 }
 
 # ---------------------------------------------------------------------------
@@ -707,7 +1057,9 @@ _ENTITY_HINTS: dict[str, list[dict]] = {
     "ministerio de hacienda": [
         {
             "tool": "search_datasets",
-            "args": {"query": "transferencias financiacion autonomica liquidacion presupuestos hacienda"},
+            "args": {
+                "query": "transferencias financiacion autonomica liquidacion presupuestos hacienda"
+            },
             "rationale": "Ministerio de Hacienda publishes annual fiscal transfer and budget execution data.",
         },
         {
@@ -731,14 +1083,18 @@ _ENTITY_HINTS: dict[str, list[dict]] = {
     "enfermería": [
         {
             "tool": "search_datasets",
-            "args": {"query": "profesionales sanitarios enfermeras ministerio sanidad SIAP"},
+            "args": {
+                "query": "profesionales sanitarios enfermeras ministerio sanidad SIAP"
+            },
             "rationale": "Ministerio de Sanidad SIAP tracks active healthcare professionals by category.",
         },
     ],
     "ministerio de sanidad": [
         {
             "tool": "search_datasets",
-            "args": {"query": "estadisticas sanitarias recursos humanos ministerio sanidad"},
+            "args": {
+                "query": "estadisticas sanitarias recursos humanos ministerio sanidad"
+            },
             "rationale": "Ministerio de Sanidad publishes workforce and activity statistics (SNS).",
         },
     ],
@@ -787,7 +1143,9 @@ _ENTITY_HINTS: dict[str, list[dict]] = {
     "ministerio de educación": [
         {
             "tool": "search_datasets",
-            "args": {"query": "estadistica educacion abandono escolar ministerio educacion"},
+            "args": {
+                "query": "estadistica educacion abandono escolar ministerio educacion"
+            },
             "rationale": "Ministerio de Educación publishes annual education statistics.",
         },
     ],
@@ -797,6 +1155,7 @@ _ENTITY_HINTS: dict[str, list[dict]] = {
 # Geographic scope hints
 # Maps normalized region name fragment → additional regional source entries
 # ---------------------------------------------------------------------------
+
 
 def _geo_ckan(region_slug: str, label: str, portal_url: str) -> list[dict]:
     """Helper to build a standard datos.gob.es publisher hint for a CCAA."""
@@ -819,7 +1178,10 @@ _GEO_HINTS: dict[str, list[dict]] = {
         },
         {
             "tool": "search_datasets",
-            "args": {"query": "generalitat catalunya estadistica", "publisher": "generalitat-de-catalunya"},
+            "args": {
+                "query": "generalitat catalunya estadistica",
+                "publisher": "generalitat-de-catalunya",
+            },
             "rationale": "Catalan government datasets indexed on datos.gob.es.",
         },
     ],
@@ -868,69 +1230,61 @@ _GEO_HINTS: dict[str, list[dict]] = {
     "navarra": [
         {
             "tool": "search_datasets",
-            "args": {"query": "navarra estadistica", "publisher": "gobierno-de-navarra"},
+            "args": {
+                "query": "navarra estadistica",
+                "publisher": "gobierno-de-navarra",
+            },
             "rationale": "Gobierno de Navarra — gobiernoabierto.navarra.es/es/open-data (CKAN).",
         },
     ],
     "canarias": [
         {
             "tool": "search_datasets",
-            "args": {"query": "canarias estadistica", "publisher": "gobierno-de-canarias"},
+            "args": {
+                "query": "canarias estadistica",
+                "publisher": "gobierno-de-canarias",
+            },
             "rationale": "Gobierno de Canarias — datos.canarias.es (CKAN).",
         },
     ],
     "castilla y león": [
         {
             "tool": "search_datasets",
-            "args": {"query": "castilla leon estadistica", "publisher": "junta-de-castilla-y-leon"},
+            "args": {
+                "query": "castilla leon estadistica",
+                "publisher": "junta-de-castilla-y-leon",
+            },
             "rationale": "Junta de Castilla y León — datosabiertos.jcyl.es (CKAN).",
         },
     ],
     # ── Communities with datos.gob.es presence ────────────────────────────
     "andalucía": _geo_ckan(
-        "junta-de-andalucia", "Andalucía",
-        "juntadeandalucia.es/institutodeestadisticaycartografia"
+        "junta-de-andalucia",
+        "Andalucía",
+        "juntadeandalucia.es/institutodeestadisticaycartografia",
     ),
     "asturias": _geo_ckan(
-        "gobierno-del-principado-de-asturias", "Asturias",
-        "sadei.es"
+        "gobierno-del-principado-de-asturias", "Asturias", "sadei.es"
     ),
     "islas baleares": _geo_ckan(
-        "govern-de-les-illes-balears", "Illes Balears",
-        "ibestat.caib.es"
+        "govern-de-les-illes-balears", "Illes Balears", "ibestat.caib.es"
     ),
-    "cantabria": _geo_ckan(
-        "gobierno-de-cantabria", "Cantabria",
-        "icane.es"
-    ),
+    "cantabria": _geo_ckan("gobierno-de-cantabria", "Cantabria", "icane.es"),
     "castilla-la mancha": _geo_ckan(
-        "junta-de-comunidades-de-castilla-la-mancha", "Castilla-La Mancha",
-        "estadistica.castillalamancha.es"
+        "junta-de-comunidades-de-castilla-la-mancha",
+        "Castilla-La Mancha",
+        "estadistica.castillalamancha.es",
     ),
     "extremadura": _geo_ckan(
-        "junta-de-extremadura", "Extremadura",
-        "estadistica.gobex.es"
+        "junta-de-extremadura", "Extremadura", "estadistica.gobex.es"
     ),
-    "galicia": _geo_ckan(
-        "xunta-de-galicia", "Galicia",
-        "ige.eu / abertos.xunta.gal"
-    ),
-    "murcia": _geo_ckan(
-        "region-de-murcia", "Murcia",
-        "crem.es"
-    ),
+    "galicia": _geo_ckan("xunta-de-galicia", "Galicia", "ige.eu / abertos.xunta.gal"),
+    "murcia": _geo_ckan("region-de-murcia", "Murcia", "crem.es"),
     "la rioja": _geo_ckan(
-        "gobierno-de-la-rioja", "La Rioja",
-        "larioja.org/estadistica"
+        "gobierno-de-la-rioja", "La Rioja", "larioja.org/estadistica"
     ),
-    "ceuta": _geo_ckan(
-        "ciudad-autonoma-de-ceuta", "Ceuta",
-        "ceuta.es"
-    ),
-    "melilla": _geo_ckan(
-        "ciudad-autonoma-de-melilla", "Melilla",
-        "melilla.es"
-    ),
+    "ceuta": _geo_ckan("ciudad-autonoma-de-ceuta", "Ceuta", "ceuta.es"),
+    "melilla": _geo_ckan("ciudad-autonoma-de-melilla", "Melilla", "melilla.es"),
 }
 
 # ---------------------------------------------------------------------------
@@ -992,7 +1346,11 @@ _TYPE_STRATEGIES: dict[str, str] = {
 def _route_by_keywords(claim: str) -> list[dict]:
     """Match routing rules by keyword scanning of the claim text."""
     claim_lower = claim.lower()
-    return [rule for rule in _ROUTING_RULES if any(kw in claim_lower for kw in rule["keywords"])]
+    return [
+        rule
+        for rule in _ROUTING_RULES
+        if any(kw in claim_lower for kw in rule["keywords"])
+    ]
 
 
 def _route_by_topic(ambito_tematico: str | None) -> list[dict]:
@@ -1198,7 +1556,11 @@ def register_verify_claim_tool(mcp: FastMCP) -> None:
 
         # Extract a reference year from periodo_temporal for query focus (since_year hint)
         ref_year_str: str | None = None
-        if periodo_temporal and periodo_temporal.lower() not in ("actual", "actualidad", "presente"):
+        if periodo_temporal and periodo_temporal.lower() not in (
+            "actual",
+            "actualidad",
+            "presente",
+        ):
             candidate = periodo_temporal.strip()[:4]
             ref_year_str = candidate if candidate.isdigit() else None
 
@@ -1233,7 +1595,11 @@ def register_verify_claim_tool(mcp: FastMCP) -> None:
             lines.append(f"Ámbito geográfico: {ambito_geografico}")
         if ambito_tematico:
             lines.append(f"Ámbito temático: {ambito_tematico}")
-        if fuente_citada and fuente_citada.lower() not in ("no especificada", "no citada", "not cited"):
+        if fuente_citada and fuente_citada.lower() not in (
+            "no especificada",
+            "no citada",
+            "not cited",
+        ):
             lines.append(f"Fuente citada: {fuente_citada}")
         if tipo_claim:
             lines.append(f"Tipo: {tipo_claim}")
@@ -1268,12 +1634,14 @@ def register_verify_claim_tool(mcp: FastMCP) -> None:
             return "\n".join(lines)
 
         if matched_rules:
-            lines.append(f"Categorías identificadas: {', '.join(r['category'] for r in matched_rules)}\n")
+            lines.append(
+                f"Categorías identificadas: {', '.join(r['category'] for r in matched_rules)}\n"
+            )
 
         # ── Type-specific strategy ────────────────────────────────────────
-        if tipo and tipo in _TYPE_STRATEGIES:
+        if tipo_claim and tipo_claim in _TYPE_STRATEGIES:
             lines.append("═" * 50)
-            lines.append(_TYPE_STRATEGIES[tipo])
+            lines.append(_TYPE_STRATEGIES[tipo_claim])
             lines.append("")
 
         # ── Per-category routing plan ─────────────────────────────────────
@@ -1289,7 +1657,7 @@ def register_verify_claim_tool(mcp: FastMCP) -> None:
                 raw_args = dict(source_entry.get("args") or {})
                 rationale = source_entry["rationale"]
 
-                # Inject reference period from año if available
+                # Inject reference period from ref_year_str if available
                 if ref_year_str:
                     if "since_year" in raw_args:
                         # keep since_year as-is; just bound the until_year
@@ -1300,7 +1668,7 @@ def register_verify_claim_tool(mcp: FastMCP) -> None:
                 bounded_args = _apply_temporal_bounds(raw_args, effective_cap)
 
                 # For ranking type, extend since_year as far back as possible
-                if tipo == "ranking" and "since_year" in bounded_args:
+                if tipo_claim == "ranking" and "since_year" in bounded_args:
                     bounded_args["since_year"] = "2000"
 
                 args_str = ", ".join(
@@ -1335,7 +1703,9 @@ def register_verify_claim_tool(mcp: FastMCP) -> None:
             lines.append("")
             for hint in entity_hints:
                 tool_name = hint["tool"]
-                bounded_args = _apply_temporal_bounds(dict(hint.get("args") or {}), effective_cap)
+                bounded_args = _apply_temporal_bounds(
+                    dict(hint.get("args") or {}), effective_cap
+                )
                 args_str = ", ".join(
                     f'{k}="{v}"' if isinstance(v, str) else f"{k}={v}"
                     for k, v in bounded_args.items()
@@ -1354,7 +1724,9 @@ def register_verify_claim_tool(mcp: FastMCP) -> None:
             lines.append("")
             for hint in geo_hints:
                 tool_name = hint["tool"]
-                bounded_args = _apply_temporal_bounds(dict(hint.get("args") or {}), effective_cap)
+                bounded_args = _apply_temporal_bounds(
+                    dict(hint.get("args") or {}), effective_cap
+                )
                 args_str = ", ".join(
                     f'{k}="{v}"' if isinstance(v, str) else f"{k}={v}"
                     for k, v in bounded_args.items()
@@ -1382,7 +1754,7 @@ def register_verify_claim_tool(mcp: FastMCP) -> None:
             )
         if cap_year:
             checklist_items.append(
-                f"  □ Verificar el calendario de publicación: confirmar que los datos de {año or cap_year} "
+                f"  □ Verificar el calendario de publicación: confirmar que los datos de {ref_year_str or cap_year} "
                 f"estaban publicados antes de {fecha}"
             )
         if afirmado_por:
@@ -1390,12 +1762,12 @@ def register_verify_claim_tool(mcp: FastMCP) -> None:
                 f"  □ Considerar el contexto retórico: afirmación de '{afirmado_por}' "
                 f"puede omitir datos que contradicen la narrativa"
             )
-        if tipo == "ranking":
+        if tipo_claim == "ranking":
             checklist_items.append(
                 "  □ RANKING: verificar la serie histórica completa — 'mínimo histórico' requiere "
                 "datos desde el inicio de la serie, no solo años recientes"
             )
-        if tipo == "historico":
+        if tipo_claim == "historico":
             checklist_items.append(
                 "  □ HISTÓRICO: buscar el acto legislativo o administrativo concreto en BOE; "
                 "las actas de votación están en el Diario de Sesiones del Congreso"

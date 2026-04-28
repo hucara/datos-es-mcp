@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import sepe_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 _STAT_TYPES = {
@@ -42,6 +43,8 @@ def register_get_employment_stats_tool(mcp: FastMCP) -> None:
             valid = ", ".join(f'"{k}"' for k in _STAT_TYPES)
             return f"Invalid stat_type '{stat_type}'. Valid values: {valid}."
 
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             result = await sepe_client.search_employment_datasets(
                 stat_type=stat_type, page=page
@@ -71,7 +74,9 @@ def register_get_employment_stats_tool(mcp: FastMCP) -> None:
             modified = ds.get("metadata_modified") or ""
             notes = (ds.get("notes") or "")[:200]
             resources = ds.get("resources", [])
-            fmt_list = list({r.get("format", "").upper() for r in resources if r.get("format")})
+            fmt_list = list(
+                {r.get("format", "").upper() for r in resources if r.get("format")}
+            )
 
             content_parts.append(f"{i}. {title}")
             content_parts.append(f"   ID: {ds_id}")
@@ -93,4 +98,5 @@ def register_get_employment_stats_tool(mcp: FastMCP) -> None:
             "Tip: Use list_dataset_resources(dataset_id) to see downloadable files.\n"
             "For Labour Force Survey (EPA) figures, use: query_ine_data(operation_code='EPA')"
         )
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

@@ -28,7 +28,7 @@ Categories and key widgets:
 """
 
 import logging
-from datetime import date, timedelta
+from datetime import date
 from typing import Any
 
 import httpx
@@ -93,8 +93,12 @@ async def get_generation_mix(
     assert session is not None
     try:
         return await _fetch(
-            session, "generacion", "estructura-generacion",
-            start_date, end_date, time_trunc,
+            session,
+            "generacion",
+            "estructura-generacion",
+            start_date,
+            end_date,
+            time_trunc,
         )
     finally:
         if own:
@@ -121,8 +125,12 @@ async def get_installed_capacity(
     assert session is not None
     try:
         return await _fetch(
-            session, "generacion", "potencia-instalada",
-            start_date, end_date, time_trunc,
+            session,
+            "generacion",
+            "potencia-instalada",
+            start_date,
+            end_date,
+            time_trunc,
         )
     finally:
         if own:
@@ -149,8 +157,12 @@ async def get_electricity_balance(
     assert session is not None
     try:
         return await _fetch(
-            session, "balance", "balance-electrico",
-            start_date, end_date, time_trunc,
+            session,
+            "balance",
+            "balance-electrico",
+            start_date,
+            end_date,
+            time_trunc,
         )
     finally:
         if own:
@@ -177,8 +189,12 @@ async def get_market_prices(
     assert session is not None
     try:
         return await _fetch(
-            session, "mercados", "coste-servicios-ajuste",
-            start_date, end_date, time_trunc,
+            session,
+            "mercados",
+            "coste-servicios-ajuste",
+            start_date,
+            end_date,
+            time_trunc,
         )
     finally:
         if own:
@@ -205,8 +221,12 @@ async def get_demand(
     assert session is not None
     try:
         return await _fetch(
-            session, "demanda", "variacion-demanda",
-            start_date, end_date, time_trunc,
+            session,
+            "demanda",
+            "variacion-demanda",
+            start_date,
+            end_date,
+            time_trunc,
         )
     finally:
         if own:

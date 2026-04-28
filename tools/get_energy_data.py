@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import redata_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 _DATA_TYPES = {
@@ -114,6 +115,9 @@ def register_get_energy_data_tool(mcp: FastMCP) -> None:
         if time_trunc not in _TIME_TRUNCS:
             return f"Invalid time_trunc '{time_trunc}'. Valid values: {', '.join(_TIME_TRUNCS)}."
 
+        _urls: list[str] = []
+        url_capture.set(_urls)
+
         # Set default date range
         if not start_date or not end_date:
             default_start, default_end = redata_client._default_date_range(
@@ -124,22 +128,32 @@ def register_get_energy_data_tool(mcp: FastMCP) -> None:
 
         try:
             if data_type == "generation_mix":
-                raw = await redata_client.get_generation_mix(start_date, end_date, time_trunc)
+                raw = await redata_client.get_generation_mix(
+                    start_date, end_date, time_trunc
+                )
             elif data_type == "installed_capacity":
-                raw = await redata_client.get_installed_capacity(start_date, end_date, time_trunc)
+                raw = await redata_client.get_installed_capacity(
+                    start_date, end_date, time_trunc
+                )
             elif data_type == "balance":
-                raw = await redata_client.get_electricity_balance(start_date, end_date, time_trunc)
+                raw = await redata_client.get_electricity_balance(
+                    start_date, end_date, time_trunc
+                )
             elif data_type == "demand":
                 raw = await redata_client.get_demand(start_date, end_date, time_trunc)
             elif data_type == "market_prices":
-                raw = await redata_client.get_market_prices(start_date, end_date, time_trunc)
+                raw = await redata_client.get_market_prices(
+                    start_date, end_date, time_trunc
+                )
             else:
                 return f"Unknown data_type: {data_type}"
         except Exception as e:  # noqa: BLE001
             return f"Error fetching REData energy data: {e}"
 
         top_data = raw.get("data") or {}
-        top_attrs = top_data.get("attributes") or {} if isinstance(top_data, dict) else {}
+        top_attrs = (
+            top_data.get("attributes") or {} if isinstance(top_data, dict) else {}
+        )
         title = top_attrs.get("title") or _DATA_TYPES.get(data_type, data_type)
         last_update = top_attrs.get("last-update") or ""
 
@@ -161,9 +175,22 @@ def register_get_energy_data_tool(mcp: FastMCP) -> None:
 
         # Separate renewables from non-renewables for generation_mix
         if data_type in ("generation_mix", "installed_capacity"):
-            renewables = [i for i in included if (i.get("attributes") or {}).get("type") == "Renovable"]
-            non_renewables = [i for i in included if (i.get("attributes") or {}).get("type") == "No-Renovable"]
-            other = [i for i in included if (i.get("attributes") or {}).get("type") not in ("Renovable", "No-Renovable")]
+            renewables = [
+                i
+                for i in included
+                if (i.get("attributes") or {}).get("type") == "Renovable"
+            ]
+            non_renewables = [
+                i
+                for i in included
+                if (i.get("attributes") or {}).get("type") == "No-Renovable"
+            ]
+            other = [
+                i
+                for i in included
+                if (i.get("attributes") or {}).get("type")
+                not in ("Renovable", "No-Renovable")
+            ]
 
             if renewables:
                 unit = "GW" if data_type == "installed_capacity" else "MWh"
@@ -181,4 +208,5 @@ def register_get_energy_data_tool(mcp: FastMCP) -> None:
             content_parts.extend(_format_series(included))
 
         content_parts.append("\nData source: Red Eléctrica (REData) — apidatos.ree.es")
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

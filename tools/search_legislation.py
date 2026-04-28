@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import boe_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 
@@ -20,6 +21,11 @@ def register_search_legislation_tool(mcp: FastMCP) -> None:
         Returns laws, decrees, and regulations currently in force, with their
         consolidation status, issuing department, and document identifiers.
 
+        NOTE: The BOE /legislacion-consolidada search endpoint periodically returns
+        500 errors (server-side issue beyond our control). If this tool fails with a
+        500 error, fall back to get_boe_summary with the known publication date of
+        the law, or search boe.es directly.
+
         Args:
             query: Search text (e.g. "proteccion datos", "contratos publicos", "IVA").
             from_date: Start date filter in YYYY-MM-DD format (e.g. "2020-01-01").
@@ -28,6 +34,8 @@ def register_search_legislation_tool(mcp: FastMCP) -> None:
             page_size: Results per page (default: 20, max: 100).
         """
         offset = (page - 1) * page_size
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             data = await boe_client.search_legislation(
                 query=query,
@@ -74,4 +82,5 @@ def register_search_legislation_tool(mcp: FastMCP) -> None:
             )
             content_parts.append("")
 
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

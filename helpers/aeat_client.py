@@ -1,13 +1,10 @@
 """
 Client for AEAT (Agencia Estatal de Administración Tributaria) statistical data.
 
-AEAT does not expose a query API. Its statistical data is published as:
-1. Downloadable Excel/CSV files on datos.gob.es
-2. An interactive web app (anuario estadístico) for custom tables
-3. PDF reports (annual tax collection reports)
+AEAT publishes statistical data on datos.gob.es. This client uses the
+datos.gob.es semantic API (publisher endpoint) to surface AEAT datasets.
 
-We use the datos.gob.es CKAN API to surface AEAT datasets and provide
-direct download URLs for statistical files.
+Publisher code: EA0028512 (Agencia Estatal de Administración Tributaria)
 
 Key statistical publications:
   - Anuario Estadístico: IRPF, IVA, Patrimonio, Sociedades, labor market
@@ -17,7 +14,7 @@ Key statistical publications:
 
 Reference:
   https://sede.agenciatributaria.gob.es/Sede/estadisticas.html
-  https://datos.gob.es — publisher: agencia-tributaria
+  https://datos.gob.es — publisher code: EA0028512
 """
 
 import logging
@@ -25,33 +22,34 @@ from typing import Any
 
 import httpx
 
-from helpers.env_config import get_api_url
-from helpers.http import fetch_json
+from helpers import datos_gob_es_client
 from helpers.logging import MAIN_LOGGER_NAME
-from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
-# Direct dataset IDs on datos.gob.es for key AEAT statistical publications
-_KNOWN_DATASETS = {
+# AEAT publisher code on datos.gob.es semantic API
+_AEAT_PUBLISHER = "EA0028512"
+
+# Dataset types with search keywords and descriptions
+_KNOWN_DATASETS: dict[str, dict[str, str]] = {
     "anuario_estadistico": {
-        "id": "ea0028512-https-www-agenciatributaria-es-aeat-internet-datosabiertos-catalogo-hacienda-anuario-estadistico-shtml",
+        "keyword": "anuario",
         "description": "Anuario Estadístico AEAT — IRPF, IVA, Patrimonio, Sociedades, labor market",
     },
     "recaudacion": {
-        "query": "informes anuales recaudacion tributaria AEAT",
+        "keyword": "recaudacion",
         "description": "Informes anuales de Recaudación Tributaria — annual tax revenue totals",
     },
     "irpf": {
-        "query": "estadisticas IRPF impuesto renta personas fisicas AEAT",
+        "keyword": "IRPF",
         "description": "IRPF statistics — income distribution, tax brackets, deductions",
     },
     "iva": {
-        "query": "estadisticas IVA impuesto valor añadido AEAT",
+        "keyword": "IVA",
         "description": "IVA/VAT statistics — declared sales, purchases, refunds",
     },
     "sociedades": {
-        "query": "estadisticas impuesto sociedades AEAT",
+        "keyword": "sociedades",
         "description": "Corporate tax (Impuesto sobre Sociedades) — profits, effective rates",
     },
 }
@@ -67,47 +65,61 @@ async def search_aeat_datasets(
     """
     Search datos.gob.es for AEAT statistical datasets.
 
+    Uses the publisher/EA0028512.json endpoint to list all AEAT datasets,
+    optionally filtered by a keyword match on title.
+
     Args:
         stat_type: One of the known AEAT dataset types:
                    "anuario_estadistico", "recaudacion", "irpf", "iva", "sociedades"
-        custom_query: Override the search query.
+        custom_query: Override the search keyword.
         page: Page number.
         page_size: Results per page.
 
     Returns:
-        CKAN search result dict.
+        dict with "results" (list of normalized datasets), "count", "page", "page_size".
     """
+    entry = _KNOWN_DATASETS.get(stat_type, {})
+    keyword = custom_query or entry.get("keyword") or stat_type
+
     own = session is None
     if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
+        import httpx as _httpx
+
+        from helpers.user_agent import USER_AGENT
+
+        session = _httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
     assert session is not None
+
     try:
-        base_url = get_api_url("datos_gob_es")
-        url = f"{base_url}catalog/api/action/package_search"
+        # Fetch from AEAT publisher — get enough to filter by keyword
+        raw = await datos_gob_es_client.search_datasets(
+            query=keyword,
+            publisher=_AEAT_PUBLISHER,
+            page=page,
+            page_size=page_size,
+            session=session,
+        )
+        results = raw.get("results", [])
 
-        entry = _KNOWN_DATASETS.get(stat_type, {})
+        # If publisher returns unfiltered list, filter by keyword in title/description
+        if keyword and results:
+            kw_lower = keyword.lower()
+            filtered = [
+                r
+                for r in results
+                if kw_lower in r.get("title", "").lower()
+                or kw_lower in r.get("description", "").lower()
+            ]
+            # Only use filtered if it found matches; otherwise return all
+            if filtered:
+                results = filtered
 
-        # Try by known dataset ID first (most precise)
-        if "id" in entry and not custom_query:
-            id_url = f"{base_url}catalog/api/action/package_show"
-            try:
-                data = await fetch_json(session, id_url, log_prefix="AEAT API", params={"id": entry["id"]})
-                result = data.get("result")
-                if result:
-                    return {"results": [result], "count": 1}
-            except Exception:
-                pass  # Fall through to search
-
-        query = custom_query or entry.get("query") or f"AEAT {stat_type} estadistica"
-        params: dict[str, Any] = {
-            "q": query,
-            "fq": 'organization:"agencia-tributaria" OR publisher:"Agencia Tributaria"',
-            "rows": min(page_size, 100),
-            "start": (page - 1) * page_size,
-            "sort": "metadata_modified desc",
+        return {
+            "results": results,
+            "count": raw.get("count", len(results)),
+            "page": page,
+            "page_size": len(results),
         }
-        data = await fetch_json(session, url, log_prefix="AEAT API", params=params)
-        return data.get("result", {})
     finally:
         if own:
             await session.aclose()

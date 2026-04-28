@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import ministerios_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 _MINISTERIO = "trafico"
@@ -21,7 +22,9 @@ def _format_results(result: dict) -> str:
     ]
     if stat_desc:
         lines.append(f"Topic: {stat_desc}")
-    lines.append(f"\nFound {count} dataset(s) (page {page}, showing {len(datasets)}):\n")
+    lines.append(
+        f"\nFound {count} dataset(s) (page {page}, showing {len(datasets)}):\n"
+    )
 
     for i, ds in enumerate(datasets, 1):
         lines.append(f"{i}. {ds.get('title', 'Untitled')}")
@@ -82,6 +85,8 @@ def register_get_traffic_stats_tool(mcp: FastMCP) -> None:
           - DGT statistics: https://www.dgt.es/inicio/estadisticas-e-indicadores/
           - For EU road safety comparisons use get_eurostat_data (tran_sf_* datasets)
         """
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             result = await ministerios_client.search_ministerio_stats(
                 ministerio=_MINISTERIO,
@@ -90,7 +95,7 @@ def register_get_traffic_stats_tool(mcp: FastMCP) -> None:
                 period=period,
                 page=page,
             )
-            return _format_results(result)
+            return _format_results(result) + source_footer(_urls)
         except ValueError as e:
             return (
                 f"Invalid stat_type '{stat_type}'. "

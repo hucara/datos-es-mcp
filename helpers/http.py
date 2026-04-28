@@ -5,10 +5,12 @@ Features:
   - Exponential backoff retry (up to 3 attempts, delays 1s → 2s → 4s)
   - Retries on: connection errors, timeouts, HTTP 429/500/502/503/504
   - Structured error logging with per-client prefix labels
+  - Optional URL capture via url_capture ContextVar (set by tools to record API URLs)
 """
 
 import asyncio
 import logging
+from contextvars import ContextVar
 from typing import Any
 
 import httpx
@@ -16,6 +18,21 @@ import httpx
 from helpers.logging import MAIN_LOGGER_NAME
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
+
+# Tools set this to a fresh list before calling clients to capture every API URL used.
+# Default None means don't capture. Each asyncio Task inherits its own copy.
+url_capture: ContextVar[list[str] | None] = ContextVar("url_capture", default=None)
+
+
+def source_footer(urls: list[str]) -> str:
+    """Return a formatted source-URL footer for tool output, deduplicating URLs."""
+    if not urls:
+        return ""
+    unique = list(dict.fromkeys(urls))
+    lines = ["\nSource API URL(s):"]
+    lines.extend(f"  {u}" for u in unique)
+    return "\n".join(lines)
+
 
 _RETRY_STATUS_CODES = {429, 500, 502, 503, 504}
 _MAX_RETRIES = 3
@@ -57,7 +74,13 @@ async def fetch_json(
     for attempt in range(1, _MAX_RETRIES + 1):
         try:
             logger.debug("%sGET %s (attempt %d/%d)", prefix, url, attempt, _MAX_RETRIES)
-            resp = await client.get(url, timeout=timeout, **kwargs)
+            resp = await client.get(
+                url, timeout=timeout, follow_redirects=True, **kwargs
+            )
+
+            _cap = url_capture.get()
+            if _cap is not None:
+                _cap.append(str(resp.request.url))
 
             if resp.status_code in _RETRY_STATUS_CODES and attempt < _MAX_RETRIES:
                 delay = _BACKOFF_BASE * (2 ** (attempt - 1))
@@ -76,7 +99,11 @@ async def fetch_json(
             resp.raise_for_status()
             return resp.json()
 
-        except (httpx.ConnectError, httpx.TimeoutException, httpx.RemoteProtocolError) as exc:
+        except (
+            httpx.ConnectError,
+            httpx.TimeoutException,
+            httpx.RemoteProtocolError,
+        ) as exc:
             last_exc = exc
             if attempt < _MAX_RETRIES:
                 delay = _BACKOFF_BASE * (2 ** (attempt - 1))
@@ -101,7 +128,15 @@ async def fetch_json(
                 raise
 
         except httpx.HTTPStatusError as exc:
-            logger.error("%sHTTP error for %s: %s", prefix, url, exc)
+            # 4xx errors are client-side problems (bad dataset code, invalid params)
+            # — log as WARNING, not ERROR, since the tool handles them gracefully.
+            # 5xx errors are server-side problems and warrant ERROR level.
+            if exc.response.status_code < 500:
+                logger.warning(
+                    "%sHTTP %d for %s: %s", prefix, exc.response.status_code, url, exc
+                )
+            else:
+                logger.error("%sHTTP error for %s: %s", prefix, url, exc)
             raise
 
     # Unreachable in practice, but satisfies type checkers

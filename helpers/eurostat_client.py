@@ -54,10 +54,10 @@ _BASE_URL = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data
 # Curated map of topic → (dataset_code, description, useful_filters)
 DATASET_CATALOG: dict[str, dict] = {
     "gdp_growth": {
-        "code": "tec00001",
-        "description": "Real GDP growth rate (%)",
-        "unit": "CLV_PCH_PRE",
-        "note": "Annual % change in real GDP. Compare Spain (ES) vs EU27 (EU27_2020).",
+        "code": "sdg_08_10",
+        "description": "Real GDP per capita growth rate (%)",
+        "unit": "CLV_PCH_PRE_HAB",
+        "note": "Annual % change in real GDP per capita. Compare Spain (ES) vs EU27 (EU27_2020).",
     },
     "gdp_per_capita": {
         "code": "sdg_08_10",
@@ -70,6 +70,7 @@ DATASET_CATALOG: dict[str, dict] = {
         "description": "HICP inflation — monthly annual rate of change (%)",
         "unit": "RCH_A",
         "note": "Harmonised Consumer Price Index (equivalent to CPI). Monthly data.",
+        "extra_defaults": {"coicop": "CP00"},
     },
     "inflation_annual": {
         "code": "prc_hicp_aind",
@@ -84,15 +85,16 @@ DATASET_CATALOG: dict[str, dict] = {
         "note": "Annual unemployment rate. age=TOTAL, sex=T.",
     },
     "employment_rate": {
-        "code": "lfsa_ergan",
+        "code": "lfsi_emp_a",
         "description": "Employment rate — annual (%)",
         "unit": "PC_POP",
         "note": "% of working-age population (20–64) in employment.",
+        "extra_defaults": {"sex": "T", "age": "Y20-64"},
     },
     "house_prices": {
         "code": "prc_hpi_a",
         "description": "House price index — annual (2015=100)",
-        "unit": "INX_A_AVG",
+        "unit": "I15_A_AVG",
         "note": "Residential property price index. Key for housing affordability claims.",
     },
     "renewable_share": {
@@ -108,7 +110,7 @@ DATASET_CATALOG: dict[str, dict] = {
         "note": "Household electricity prices in EUR/kWh.",
     },
     "electricity_prices_industry": {
-        "code": "nrg_pc_202",
+        "code": "nrg_pc_204",
         "description": "Electricity prices for non-household consumers (industry/SMEs)",
         "unit": "KWH",
         "note": "Industrial/SME electricity prices. Useful for competitiveness claims.",
@@ -120,22 +122,23 @@ DATASET_CATALOG: dict[str, dict] = {
         "note": "Maastricht debt criterion.",
     },
     "government_deficit": {
-        "code": "gov_10a_main",
-        "description": "Government revenue, expenditure, deficit (% of GDP)",
+        "code": "gov_10dd_edpt1",
+        "description": "Government deficit/surplus (% of GDP)",
         "unit": "PC_GDP",
-        "note": "Budget deficit (-) or surplus (+) as % of GDP.",
+        "note": "Net lending (+) / net borrowing (-) as % of GDP. Negative = deficit.",
+        "extra_defaults": {"na_item": "B9", "sector": "S13"},
     },
     "wages": {
-        "code": "earn_eses_annual",
-        "description": "Mean and median earnings",
-        "unit": "EUR",
-        "note": "Annual earnings statistics. For wage evolution claims.",
+        "code": "earn_nt_net",
+        "description": "Annual net earnings",
+        "note": "Annual net earnings in EUR. For wage evolution and purchasing-power claims.",
+        "extra_defaults": {"currency": "EUR", "estruct": "NET"},
     },
     "poverty_inequality": {
         "code": "ilc_di12",
         "description": "Gini coefficient of equivalised disposable income",
-        "unit": "GINI",
         "note": "Income inequality metric. Lower = more equal.",
+        "extra_defaults": {"statinfo": "GINI_HND", "age": "TOTAL"},
     },
     "fossil_fuel_imports": {
         "code": "nrg_ti_eh",
@@ -143,9 +146,21 @@ DATASET_CATALOG: dict[str, dict] = {
         "unit": "TJ",
         "note": "Track reduction in fossil fuel import dependency.",
     },
+    "tax_burden": {
+        "code": "gov_10a_main",
+        "description": "Total government revenue (taxes + social contributions, % of GDP)",
+        "unit": "PC_GDP",
+        "note": "Total receipts (na_item=TR). Spain ~37-38%, EU27 ~45%, DE ~44%, FR ~52%.",
+        "extra_defaults": {"na_item": "TR", "sector": "S13"},
+    },
+    "gdp_pps_per_capita": {
+        "code": "sdg_10_10",
+        "description": "GDP per capita in PPS as volume index (EU27=100)",
+        "unit": "PC",
+        "note": "Spain typically 91-92 (gap ~8-9pp vs EU average of 100).",
+        "extra_defaults": {"indic_ppp": "VI_PPS_EU27_2020_HAB", "ppp_cat18": "GDP"},
+    },
 }
-
-
 
 
 async def get_dataset(
@@ -203,7 +218,9 @@ async def get_dataset(
             params.update(filters)
 
         # httpx handles list params as repeated keys
-        return await fetch_json(session, url, log_prefix="Eurostat", timeout=30.0, params=params)
+        return await fetch_json(
+            session, url, log_prefix="Eurostat", timeout=30.0, params=params
+        )
     finally:
         if own:
             await session.aclose()

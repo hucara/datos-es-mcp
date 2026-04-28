@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import ine_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 
@@ -16,6 +17,7 @@ def _format_data_points(data_list: list, max_points: int = 20) -> list[str]:
         # Convert epoch ms to readable date if numeric
         if isinstance(fecha, (int, float)):
             from datetime import datetime, timezone
+
             try:
                 dt = datetime.fromtimestamp(fecha / 1000, tz=timezone.utc)
                 fecha = dt.strftime("%Y-%m")
@@ -65,6 +67,9 @@ def register_query_ine_data_tool(mcp: FastMCP) -> None:
                 "Use get_ine_operations to discover available operation codes."
             )
 
+        _urls: list[str] = []
+        url_capture.set(_urls)
+
         try:
             # Mode 1: list tables for an operation
             if operation_code and not table_id and not series_code:
@@ -86,8 +91,9 @@ def register_query_ine_data_tool(mcp: FastMCP) -> None:
                 if len(tables) > 30:
                     content_parts.append(f"  ... and {len(tables) - 30} more tables")
                 content_parts.append(
-                    f"\nUse query_ine_data(table_id=<ID>) to fetch data from a specific table."
+                    "\nUse query_ine_data(table_id=<ID>) to fetch data from a specific table."
                 )
+                content_parts.append(source_footer(_urls))
                 return "\n".join(content_parts)
 
             # Mode 2: fetch table data
@@ -106,20 +112,29 @@ def register_query_ine_data_tool(mcp: FastMCP) -> None:
                 ]
                 for s in series_list[:10]:
                     name = s.get("Nombre") or s.get("nombre") or "Unknown series"
-                    unit = (s.get("Unidad") or {})
-                    unit_name = unit.get("Nombre", "") if isinstance(unit, dict) else str(unit)
+                    unit = s.get("Unidad") or {}
+                    unit_name = (
+                        unit.get("Nombre", "") if isinstance(unit, dict) else str(unit)
+                    )
                     data_pts = s.get("Data") or s.get("data") or []
 
                     content_parts.append(f"Series: {name}")
                     if unit_name:
                         content_parts.append(f"  Unit: {unit_name}")
                     if data_pts:
-                        content_parts.append(f"  Last {min(len(data_pts), last_n_periods)} periods:")
-                        content_parts.extend(_format_data_points(data_pts, last_n_periods))
+                        content_parts.append(
+                            f"  Last {min(len(data_pts), last_n_periods)} periods:"
+                        )
+                        content_parts.extend(
+                            _format_data_points(data_pts, last_n_periods)
+                        )
                     content_parts.append("")
 
                 if len(series_list) > 10:
-                    content_parts.append(f"... and {len(series_list) - 10} more series in this table.")
+                    content_parts.append(
+                        f"... and {len(series_list) - 10} more series in this table."
+                    )
+                content_parts.append(source_footer(_urls))
                 return "\n".join(content_parts)
 
             # Mode 3: fetch specific series
@@ -133,10 +148,16 @@ def register_query_ine_data_tool(mcp: FastMCP) -> None:
                     return f"No data found for series '{series_code}'."
 
                 name = s.get("Nombre") or s.get("nombre") or series_code
-                unit = (s.get("Unidad") or {})
-                unit_name = unit.get("Nombre", "") if isinstance(unit, dict) else str(unit)
-                period = (s.get("Periodicidad") or {})
-                period_name = period.get("Nombre", "") if isinstance(period, dict) else str(period)
+                unit = s.get("Unidad") or {}
+                unit_name = (
+                    unit.get("Nombre", "") if isinstance(unit, dict) else str(unit)
+                )
+                period = s.get("Periodicidad") or {}
+                period_name = (
+                    period.get("Nombre", "")
+                    if isinstance(period, dict)
+                    else str(period)
+                )
                 data_pts = s.get("Data") or s.get("data") or []
 
                 content_parts = [f"INE Series: {name}", f"Code: {series_code}"]
@@ -146,10 +167,13 @@ def register_query_ine_data_tool(mcp: FastMCP) -> None:
                     content_parts.append(f"Frequency: {period_name}")
                 content_parts.append("")
                 if data_pts:
-                    content_parts.append(f"Last {min(len(data_pts), last_n_periods)} values:")
+                    content_parts.append(
+                        f"Last {min(len(data_pts), last_n_periods)} values:"
+                    )
                     content_parts.extend(_format_data_points(data_pts, last_n_periods))
                 else:
                     content_parts.append("No data points available.")
+                content_parts.append(source_footer(_urls))
                 return "\n".join(content_parts)
 
         except Exception as e:  # noqa: BLE001

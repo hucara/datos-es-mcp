@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import cnmc_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 _SECTORS = {
@@ -46,8 +47,14 @@ def register_get_cnmc_data_tool(mcp: FastMCP) -> None:
             valid = ", ".join(f'"{k}"' for k in _SECTORS)
             return f"Invalid sector '{sector}'. Valid values: {valid}."
 
-        search_query = query or (sector and _SECTORS[sector].split(" (")[0]) or "estadisticas mercados"
+        search_query = (
+            query
+            or (sector and _SECTORS[sector].split(" (")[0])
+            or "estadisticas mercados"
+        )
 
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             result = await cnmc_client.search_datasets(
                 query=search_query, sector=sector, page=page
@@ -60,7 +67,7 @@ def register_get_cnmc_data_tool(mcp: FastMCP) -> None:
 
         if not datasets:
             return (
-                f"No CNMC datasets found"
+                "No CNMC datasets found"
                 + (f" for sector='{sector}'" if sector else "")
                 + (f" matching '{query}'" if query else "")
                 + ".\nVisit https://data.cnmc.es for the full catalog."
@@ -92,7 +99,6 @@ def register_get_cnmc_data_tool(mcp: FastMCP) -> None:
             content_parts.append(f"   URL: {ds.get('url')}")
             content_parts.append("")
 
-        content_parts.append(
-            "Full CNMC Data portal: https://data.cnmc.es/"
-        )
+        content_parts.append("Full CNMC Data portal: https://data.cnmc.es/")
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

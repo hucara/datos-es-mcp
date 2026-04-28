@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import renfe_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 
@@ -55,6 +56,8 @@ def register_get_renfe_data_tool(mcp: FastMCP) -> None:
             }
             query = f"{query} {svc_queries.get(service_type, service_type)}".strip()
 
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             result = await renfe_client.search_datasets(query=query, page=page)
         except Exception as e:  # noqa: BLE001
@@ -101,7 +104,6 @@ def register_get_renfe_data_tool(mcp: FastMCP) -> None:
             content_parts.append(f"   Portal URL: {ds.get('url')}")
             content_parts.append("")
 
-        content_parts.append(
-            "Full catalog: https://data.renfe.com/dataset"
-        )
+        content_parts.append("Full catalog: https://data.renfe.com/dataset")
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

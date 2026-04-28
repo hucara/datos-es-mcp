@@ -1,14 +1,12 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import aeat_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 _STAT_TYPES = aeat_client._KNOWN_DATASETS
 
-_TYPE_HELP = "\n".join(
-    f'  "{k}" — {v["description"]}'
-    for k, v in _STAT_TYPES.items()
-)
+_TYPE_HELP = "\n".join(f'  "{k}" — {v["description"]}' for k, v in _STAT_TYPES.items())
 
 # Contextual guidance mapped to common claim categories
 _CLAIM_GUIDANCE = {
@@ -78,6 +76,8 @@ def register_get_aeat_stats_tool(mcp: FastMCP) -> None:
             valid = ", ".join(f'"{k}"' for k in _STAT_TYPES)
             return f"Invalid stat_type '{stat_type}'. Valid values: {valid}."
 
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             result = await aeat_client.search_aeat_datasets(
                 stat_type=stat_type,
@@ -99,7 +99,9 @@ def register_get_aeat_stats_tool(mcp: FastMCP) -> None:
             f"Found {count} dataset(s) (page {page}):\n",
         ]
 
-        for i, ds in enumerate(datasets if isinstance(datasets, list) else [datasets], 1):
+        for i, ds in enumerate(
+            datasets if isinstance(datasets, list) else [datasets], 1
+        ):
             if not isinstance(ds, dict):
                 continue
             title = ds.get("title") or "Unknown"
@@ -140,4 +142,5 @@ def register_get_aeat_stats_tool(mcp: FastMCP) -> None:
             "Direct access: https://sede.agenciatributaria.gob.es/Sede/estadisticas.html\n"
             "Interactive yearbook: https://sede.agenciatributaria.gob.es/Sede/estadisticas/anuario-estadistico.html"
         )
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

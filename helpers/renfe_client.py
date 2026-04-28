@@ -69,7 +69,9 @@ async def search_datasets(
         normalized = []
         for ds in datasets:
             resources = ds.get("resources", [])
-            formats = list({r.get("format", "").upper() for r in resources if r.get("format")})
+            formats = list(
+                {r.get("format", "").upper() for r in resources if r.get("format")}
+            )
             normalized.append(
                 {
                     "id": ds.get("id"),

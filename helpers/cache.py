@@ -139,7 +139,9 @@ class MetadataCache:
             try:
                 publishers = await _fetch_datos_gob_publishers()
                 self._set(key, publishers)
-                logger.info("Cache populated: %d datos.gob.es publishers", len(publishers))
+                logger.info(
+                    "Cache populated: %d datos.gob.es publishers", len(publishers)
+                )
                 return publishers
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Could not load datos.gob.es publishers: %s", exc)
@@ -224,7 +226,9 @@ async def _fetch_datos_gob_publishers() -> list[dict[str, str]]:
     return [
         {
             "name": o.get("name", ""),
-            "display_name": o.get("display_name") or o.get("title") or o.get("name", ""),
+            "display_name": o.get("display_name")
+            or o.get("title")
+            or o.get("name", ""),
             "package_count": str(o.get("package_count", 0)),
         }
         for o in orgs

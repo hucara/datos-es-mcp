@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from helpers import aemet_client
+from helpers.http import source_footer, url_capture
 from helpers.logging import log_tool
 
 
@@ -31,6 +32,8 @@ def register_get_weather_observations_tool(mcp: FastMCP) -> None:
           6155A — Málaga (airport)
           7031  — Palma de Mallorca
         """
+        _urls: list[str] = []
+        url_capture.set(_urls)
         try:
             if station_id:
                 observations = await aemet_client.get_station_observations(station_id)
@@ -50,8 +53,12 @@ def register_get_weather_observations_tool(mcp: FastMCP) -> None:
         display = observations if station_id else observations[:30]
 
         content_parts = [
-            f"AEMET Current Observations — "
-            + (f"Station {station_id}" if station_id else f"{len(observations)} stations"),
+            "AEMET Current Observations — "
+            + (
+                f"Station {station_id}"
+                if station_id
+                else f"{len(observations)} stations"
+            ),
             "",
         ]
 
@@ -59,15 +66,15 @@ def register_get_weather_observations_tool(mcp: FastMCP) -> None:
             station = obs.get("idema") or obs.get("estacion") or "?"
             name = obs.get("ubi") or obs.get("nombre") or station
             fecha = obs.get("fint") or obs.get("fecha") or "?"
-            temp = obs.get("ta")           # air temperature °C
+            temp = obs.get("ta")  # air temperature °C
             temp_max = obs.get("tamax")
             temp_min = obs.get("tamin")
-            humidity = obs.get("hr")       # relative humidity %
-            wind_speed = obs.get("vv")     # wind speed m/s
-            wind_dir = obs.get("dv")       # wind direction degrees
-            precip = obs.get("prec")       # precipitation mm
-            pressure = obs.get("pres")     # sea-level pressure hPa
-            visibility = obs.get("vis")    # visibility km
+            humidity = obs.get("hr")  # relative humidity %
+            wind_speed = obs.get("vv")  # wind speed m/s
+            wind_dir = obs.get("dv")  # wind direction degrees
+            precip = obs.get("prec")  # precipitation mm
+            pressure = obs.get("pres")  # sea-level pressure hPa
+            visibility = obs.get("vis")  # visibility km
             snow_depth = obs.get("nieve")
 
             content_parts.append(f"Station: {name} ({station})")
@@ -105,4 +112,5 @@ def register_get_weather_observations_tool(mcp: FastMCP) -> None:
             )
 
         content_parts.append("Data source: AEMET OpenData (opendata.aemet.es)")
+        content_parts.append(source_footer(_urls))
         return "\n".join(content_parts)

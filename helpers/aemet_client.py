@@ -51,19 +51,25 @@ async def _fetch_aemet(
     url = f"{base_url}{endpoint}"
     headers = {"api_key": api_key, "User-Agent": USER_AGENT}
 
-    meta = await fetch_json(client, url, log_prefix="AEMET step-1", timeout=15.0, headers=headers)
+    meta = await fetch_json(
+        client, url, log_prefix="AEMET step-1", timeout=15.0, headers=headers
+    )
 
     estado = meta.get("estado")
     if estado == 404:
         raise ValueError(f"AEMET: {meta.get('descripcion', 'Not found')}")
     if estado not in (200, None):
-        raise ValueError(f"AEMET API error {estado}: {meta.get('descripcion', 'Unknown')}")
+        raise ValueError(
+            f"AEMET API error {estado}: {meta.get('descripcion', 'Unknown')}"
+        )
 
     datos_url = meta.get("datos")
     if not datos_url:
         return meta
 
-    return await fetch_json(client, datos_url, log_prefix="AEMET step-2", timeout=20.0, headers=headers)
+    return await fetch_json(
+        client, datos_url, log_prefix="AEMET step-2", timeout=20.0, headers=headers
+    )
 
 
 async def get_municipio_forecast_daily(
