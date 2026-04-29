@@ -60,6 +60,120 @@ def register_query_ine_data_tool(mcp: FastMCP) -> None:
             - query_ine_data(operation_code="IPC") — list IPC tables
             - query_ine_data(table_id="50902", last_n_periods=24) — last 24 months of IPC
             - query_ine_data(series_code="IPC251856", last_n_periods=6) — last 6 CPI values
+
+        All available INE operation codes (112 total):
+            ADRH   — Atlas de distribución de renta de los hogares
+            ANES   — Estadística de Adquisiciones de Nacionalidad Española de Residentes
+            APEL   — Distribución de Apellidos
+            CCM    — Encuesta de coyuntura de comercio al por menor. Base 1994
+            CDMGE  — Comercio diario al por menor de grandes empresas
+            CMEA   — Cuentas de Emisiones a la Atmósfera Trimestrales
+            CNE    — Contabilidad Nacional de España. Base 2010
+            CNEAG  — Contabilidad nacional anual de España: agregados por rama de actividad
+            CNTR2000 — Contabilidad Nacional Trimestral de España. Base 2000
+            CNTR2008 — Contabilidad Nacional Trimestral de España. Base 2008
+            CNTR2010 — Contabilidad Nacional Trimestral de España: Principales Agregados
+            CODEM  — Coyuntura demográfica de empresas
+            CONA   — Estadística de Condenados: Adultos
+            CONM   — Estadística de Condenados: Menores
+            CP     — Cifras de Población
+            CTNFSI — Cuentas Trimestrales no Financieras de los Sectores Institucionales
+            DIR    — Explotación Estadística del Directorio Central de Empresas
+            DPOD   — Poblaciones de derecho 1986–1995
+            DPOH   — Poblaciones de hecho 1900–1991
+            DPOP   — Cifras Oficiales de Población de los Municipios Españoles (Padrón)
+            EACL   — Encuesta Anual de Coste Laboral
+            EAES   — Encuesta Anual de Estructura Salarial
+            ECM    — Estadística de Defunciones según la Causa de Muerte
+            ECP    — Estadística Continua de Población
+            ECSE   — Encuesta Coyuntural sobre Stocks y Existencias
+            ECV    — Encuesta de Condiciones de Vida (income, poverty, social exclusion)
+            ECVG   — Estadística sobre Cadenas de Valor Globales
+            EDES   — Estimacion del numero de defunciones semanales (EDeS)
+            EEE:COM — Estadística Estructural de Empresas: Sector Comercio
+            EEE:IND — Estadística Estructural de Empresas: Sector Industrial
+            EEE:SER — Estadística Estructural de Empresas: Sector Servicios
+            EFPA   — Flujos de la Población Activa
+            EG     — Encuesta de Gasto Turístico
+            EH     — Estadística sobre Ejecuciones Hipotecarias
+            EI     — Estadística de Efectos de Comercio Impagados
+            EIAP   — Encuesta Industrial Anual de Productos
+            EJP    — Estadística de Juzgados de Paz
+            EM     — Estadística de Migraciones
+            EMCR   — Estadística de Migraciones y Cambios de Residencia
+            EMLG   — Estadística de Movilidad Laboral y Geográfica
+            EMN    — Estimación Mensual de Nacimientos
+            ENSD   — Estadística de Nulidades, Separaciones y Divorcios
+            EOA    — Encuesta de Ocupación en Albergues
+            EOAC   — Encuesta de Ocupación en Campings
+            EOAP   — Encuesta de Ocupación en Apartamentos Turísticos
+            EOH    — Encuesta de Ocupación Hotelera
+            EOT    — Encuesta de Ocupación en Alojamientos Turísticos
+            EOTR   — Encuesta de Ocupación en Alojamientos de Turismo Rural
+            EPA    — Encuesta de Población Activa (labour force survey, employment, unemployment)
+            EPC    — Estadística del Procedimiento Concursal
+            EPF    — Encuesta de Presupuestos Familiares (household budget survey)
+            EPOBA  — Estimaciones de la Población Actual (ePOBa)
+            EPOBC  — Proyecciones de Población a Corto Plazo
+            EPOBL  — Proyecciones de Población a Largo Plazo
+            ETCL   — Encuesta Trimestral de Coste Laboral
+            ETDP   — Estadística de Transmisión de Derechos de la Propiedad
+            ETR    — Encuesta de turismo de residentes
+            FR     — Movimientos Turísticos en Fronteras
+            GDRE   — Distribución del gasto de residentes en viajes al extranjero
+            GDVE   — Distribución del gasto de visitantes extranjeros en España
+            HPT    — Estadística de Hipotecas (mortgages)
+            IAS    — Indicadores de Actividad del Sector Servicios
+            ICE    — Indicadores de Confianza Empresarial
+            ICES   — Encuesta sobre Comercio Internacional de Servicios
+            ICLA   — Índice de Coste Laboral Armonizado
+            ICM    — Índices de Comercio al por Menor
+            ICN    — Índices de Cifras de Negocios en la Industria
+            ICNE   — Índice de Cifra de Negocios Empresarial
+            IDB    — Indicadores Demográficos Básicos (births, deaths, fertility, life expectancy)
+            IEP    — Índices de Entradas de Pedidos
+            IGC    — Índice de Garantía de la Competitividad
+            IIH    — Índice de ingresos hoteleros
+            IMCV   — Indicador Multidimensional de Calidad de Vida
+            IMM    — Índices de Precios de Materiales y Energía e Índices de Mano de Obra
+            IPAC   — Índice de Precios de Camping
+            IPAP   — Índice de Precios de Apartamentos Turísticos
+            IPC    — Índice de Precios de Consumo (CPI)
+            IPCA   — Índice de Precios de Consumo Armonizado (HICP)
+            IPCO   — Índice de Producción de la Construcción
+            IPH    — Índice de Precios Hoteleros
+            IPI    — Índices de Producción Industrial
+            IPRI   — Índices de Precios Industriales (PPI)
+            IPRX-M — Índices de Precios de Exportación e Importación de Productos Industriales
+            IPS    — Índices de Precios del Sector Servicios
+            IPSS   — Índice de Producción del Sector Servicios
+            IPT    — Índice de Precios del Trabajo
+            IPTR   — Índice de Precios de Alojamientos de Turismo Rural
+            IPV    — Índice de Precios de la Vivienda (house price index)
+            IPVA   — Índice de Precios de Vivienda en Alquiler (rental price index)
+            IRSH   — Indicadores de Rentabilidad del Sector Hotelero
+            MMOV   — Movilidad COVID19
+            MNPD   — MNP Estadística de Defunciones
+            MNPM   — MNP Estadística de Matrimonios
+            MNPN   — MNP Estadística de Nacimientos
+            MOS    — Comercio Internacional de Servicios por Modos de Suministro
+            MYH    — Mujeres y Hombres en España (gender equality indicators)
+            OAT    — Ocupación en alojamientos turísticos
+            PERE   — Estadística del Padrón de la Población Española en el Extranjero
+            SM     — Estadística de Sociedades Mercantiles
+            STEC   — Comercio Internacional de Servicios por Características de las Empresas
+            TF     — Estadística sobre Transporte Ferroviario
+            TM     — Tablas de Mortalidad
+            TMOV   — Medición del turismo por posición de teléfonos móviles
+            TNOM   — Distribución de Nombres
+            TV     — Estadística de Transporte de Viajeros
+            UA     — Indicadores Urbanos
+            VGD    — Estadística de Violencia Doméstica y Violencia de Género
+            VTE    — Viviendas turísticas en España
+
+        NOTE: The INE does NOT publish Social Security contributor/pensioner data.
+        For INSS affiliation and pension stats use get_social_security_stats or
+        visit https://portaldatos.seg-social.gob.es/
         """
         if not any([operation_code, table_id, series_code]):
             return (

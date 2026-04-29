@@ -216,33 +216,58 @@ _MINISTERIOS: dict[str, dict[str, Any]] = {
             "instituto-nacional-de-la-seguridad-social",
         ],
         "portal_url": "https://www.seg-social.es/wps/portal/wss/internet/EstadisticasPresupuestosEstudios",
+        "opendata_url": "https://portaldatos.seg-social.gob.es/",
         "stat_types": {
             "pensiones": {
                 "query": "pensiones numero pensionistas importe medio jubilacion vejez",
+                "keyword": "pensionistas",
                 "description": "Pension statistics — number of pensions, average amounts, by type",
+                "note": (
+                    "Los datos nacionales de pensiones contributivas (número, importe medio, "
+                    "evolución mensual) los publica el INSS en: https://portaldatos.seg-social.gob.es/ "
+                    "También disponibles en el Informe Estadístico mensual de la Seguridad Social."
+                ),
             },
             "cotizantes": {
                 "query": "afiliados cotizantes seguridad social trabajadores alta",
+                "keyword": "afiliados",
                 "description": "Social security contributors — by regime, sector, province",
+                "note": (
+                    "Los datos nacionales de afiliados en alta laboral los publica el INSS mensualmente "
+                    "en: https://portaldatos.seg-social.gob.es/ "
+                    "Dato reciente (feb 2025): ~21,3 millones de afiliados totales."
+                ),
             },
             "ratio_sostenibilidad": {
-                "query": "ratio cotizantes pensionistas sostenibilidad sistema pensiones",
+                "query": "cotizantes pensionistas sostenibilidad sistema pensiones",
+                "keyword": "cotizantes",
                 "description": "Contributor-to-pensioner ratio — system sustainability indicator",
+                "note": (
+                    "AVISO: El ratio cotizantes/pensionistas es un dato nacional del INSS NO disponible "
+                    "en datos.gob.es. El INSS lo publica mensualmente en: https://portaldatos.seg-social.gob.es/ "
+                    "Dato reciente (feb 2025): ~2,35 cotizantes por pensionista "
+                    "(≈21,3M afiliados / ≈9,1M pensionistas contributivos). "
+                    "Serie histórica disponible en el Informe Estadístico mensual del INSS."
+                ),
             },
             "prestaciones_desempleo": {
                 "query": "prestaciones desempleo paro contributivo subsidio",
+                "keyword": "prestaciones",
                 "description": "Unemployment benefits — contributory and assistance level",
             },
             "incapacidad": {
                 "query": "incapacidad temporal permanente bajas laborales IT",
+                "keyword": "incapacidad",
                 "description": "Sick leave and disability — temporary and permanent incapacity",
             },
             "accidentes_laborales": {
                 "query": "accidentes laborales trabajo lesiones enfermedades profesionales",
+                "keyword": "accidentes",
                 "description": "Occupational accidents and work-related diseases",
             },
             "inmigracion": {
                 "query": "extranjeros afiliados inmigrantes seguridad social cotizantes",
+                "keyword": "extranjeros",
                 "description": "Foreign national contributors to the social security system",
             },
         },
@@ -308,8 +333,13 @@ def format_results(result: dict, header: str) -> str:
         header,
         f"Portal: {info.get('portal_url', '')}",
     ]
+    if info.get("opendata_url"):
+        lines.append(f"Open Data: {info['opendata_url']}")
     if stat_desc:
         lines.append(f"Topic: {stat_desc}")
+    stat_note = result.get("stat_note", "")
+    if stat_note:
+        lines.append(f"\nNOTA: {stat_note}")
     lines.append(
         "\nIMPORTANT: This tool returns dataset references, NOT data values.\n"
         "To retrieve actual numbers, call:\n"
@@ -406,6 +436,8 @@ async def search_ministerio_stats(
     effective_stat = stat_type or cfg.get("default_stat_type", "")
     stat_cfg = stat_types.get(effective_stat, {})
     stat_description = stat_cfg.get("description", "")
+    stat_note = stat_cfg.get("note", "")
+    explicit_keyword = stat_cfg.get("keyword") if not custom_query else None
 
     # Build query — use the curated query string (first meaningful keyword for title search)
     if custom_query:
@@ -424,6 +456,7 @@ async def search_ministerio_stats(
     try:
         raw = await datos_gob_es_client.search_datasets(
             query=query,
+            keyword=explicit_keyword,
             page=page,
             page_size=min(page_size, 100),
             session=session,
@@ -439,8 +472,10 @@ async def search_ministerio_stats(
             "ministerio_info": {
                 "name": cfg["name"],
                 "portal_url": cfg["portal_url"],
+                "opendata_url": cfg.get("opendata_url", ""),
             },
             "stat_description": stat_description,
+            "stat_note": stat_note,
             "effective_query": query,
         }
 

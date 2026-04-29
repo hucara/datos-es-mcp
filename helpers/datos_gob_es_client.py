@@ -195,6 +195,7 @@ async def search_datasets(
     theme: str | None = None,
     publisher: str | None = None,
     format: str | None = None,
+    keyword: str | None = None,
     page: int = 1,
     page_size: int = 20,
     session: httpx.AsyncClient | None = None,
@@ -228,17 +229,18 @@ async def search_datasets(
         if publisher:
             url = f"{_BASE_URL}/catalog/dataset/publisher/{quote(publisher, safe='')}.json"
         else:
-            # Pick the first non-generic word from the query for the title keyword search
-            words = query.split() if query else []
-            keyword = next(
-                (
-                    w
-                    for w in words
-                    if _strip_accents(w.lower()).rstrip("s") not in _GENERIC_WORDS
-                    and len(w) > 3
-                ),
-                words[0] if words else query,
-            )
+            if not keyword:
+                # Pick the first non-generic word from the query for the title keyword search
+                words = query.split() if query else []
+                keyword = next(
+                    (
+                        w
+                        for w in words
+                        if _strip_accents(w.lower()).rstrip("s") not in _GENERIC_WORDS
+                        and len(w) > 3
+                    ),
+                    words[0] if words else query,
+                )
             url = f"{_BASE_URL}/catalog/dataset/title/{quote(keyword, safe='')}.json"
 
         data = await fetch_json(session, url, log_prefix="datos.gob.es", params=params)

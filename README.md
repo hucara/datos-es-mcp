@@ -6,7 +6,7 @@ Servidor [MCP (Model Context Protocol)](https://modelcontextprotocol.io) que per
 
 Model Context Protocol (MCP) server for interacting with Spanish open data (datos.gob.es, INE, Banco de España, AEMET, BOE, and more) via LLM chatbots
 
-En lugar de navegar manualmente por portales gubernamentales, puedes simplemente preguntar cosas como «¿Cuál es la tasa de paro según el INE?», «¿Cuánto gasta España en sanidad respecto a la media europea?» o «¿Cuál es el ratio cotizantes/pensionistas de la Seguridad Social?» y obtener respuestas inmediatas respaldadas por fuentes oficiales.
+En lugar de navegar manualmente por portales gubernamentales, puedes simplemente preguntar cosas como «¿Cuál es la tasa de paro según el INE?» o «¿Cuánto gasta España en sanidad respecto a la media europea?» y obtener respuestas inmediatas respaldadas por fuentes oficiales.
 
 Incluye una herramienta especializada de **verificación de afirmaciones políticas** (`verify_claim`) que enruta cualquier declaración económica o política a las fuentes de datos autorizadas y genera un plan de verificación paso a paso.
 
@@ -23,12 +23,40 @@ Este es un proyecto inspirado por el trabajo que puedes ver en:
 
 Si tienes el servidor en ejecución, usa el endpoint `/mcp`. A continuación encontrarás la configuración para los clientes más habituales.
 
+**¡ATENCIÓN!** Algunas de estas apis / datos sólo están accesibles desde España, así que si Claude hace la query es posible que no sea capaz de acceder a ello, sin embargo, siempre puedes montarte tú un cliente que haga estas llamadas.
+
 [Claude Code](#claude-code) | [Claude Desktop](#claude-desktop) | [Cursor](#cursor) | [VS Code](#vs-code) | [Windsurf](#windsurf) | [OpenCode](#opencode)
 
 ### Claude Code
 
 ```shell
 claude mcp add --transport http datos-es http://127.0.0.1:8000/mcp
+```
+
+Si el comando falla (p.ej. por incompatibilidad con la versión de Node.js), puedes añadirlo manualmente a `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "datos-es": {
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp"
+    }
+  }
+}
+```
+
+**Extensión VS Code de Claude Code:** añade lo siguiente a la configuración de usuario de VS Code (`Cmd+Shift+P` → *Open User Settings (JSON)*):
+
+```json
+{
+  "claude.mcpServers": {
+    "datos-es": {
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp"
+    }
+  }
+}
 ```
 
 ### Claude Desktop
@@ -225,6 +253,17 @@ Endpoints disponibles:
 ---
 
 ## 🛠️ Herramientas disponibles (25)
+
+### ⚡ Orden de prioridad al elegir herramienta
+
+Siempre usa la herramienta **más específica** disponible antes de recurrir a las genéricas:
+
+1. **Herramienta dedicada** (`get_employment_stats`, `query_ine_data`, `get_eurostat_data`, `get_bde_series`, `get_social_security_stats`…) — devuelve datos directamente o referencias muy precisas.
+2. **`search_datasets`** — solo si no existe herramienta dedicada para la institución o tema.
+3. **`verify_claim`** — solo para verificar afirmaciones concretas con autoría y fecha; **no** como sustituto de las herramientas de datos.
+
+> **Ejemplo correcto:** «¿Cuál es la tasa de paro?» → `query_ine_data(table_id="14506")`
+> **Ejemplo incorrecto:** «¿Cuál es la tasa de paro?» → `verify_claim(...)` → `get_employment_stats(...)` → `query_ine_data(...)` (tres saltos innecesarios)
 
 ### Catálogo nacional — datos.gob.es
 
