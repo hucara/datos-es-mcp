@@ -281,10 +281,29 @@ async def get_dataset_details(
         session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
     assert session is not None
     try:
-        # Try as publisher code
-        url = f"{_BASE_URL}/catalog/dataset/publisher/{quote(dataset_id, safe='')}.json"
         params: dict[str, Any] = {"_pageSize": 1, "_page": 0}
+
+        # Try as direct dataset slug (e.g. "e00003901-anuario-trafico-2023")
+        # Use a plain GET without retry since this endpoint may not exist.
         try:
+            url = f"{_BASE_URL}/catalog/dataset/{quote(dataset_id, safe='')}.json"
+            resp = await session.get(
+                url, timeout=10.0, follow_redirects=True, params=params
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                items = data.get("result", {}).get("items", [])
+                if items:
+                    return _normalize_item(items[0])
+                result_obj = data.get("result")
+                if isinstance(result_obj, dict) and result_obj.get("_about"):
+                    return _normalize_item(result_obj)
+        except Exception:
+            pass
+
+        # Try as publisher code
+        try:
+            url = f"{_BASE_URL}/catalog/dataset/publisher/{quote(dataset_id, safe='')}.json"
             data = await fetch_json(
                 session, url, log_prefix="datos.gob.es", params=params
             )
@@ -294,7 +313,7 @@ async def get_dataset_details(
         except Exception:
             pass
 
-        # Try as title search
+        # Try as title search (last resort — may return wrong dataset for slugs)
         url = f"{_BASE_URL}/catalog/dataset/title/{quote(dataset_id, safe='')}.json"
         data = await fetch_json(session, url, log_prefix="datos.gob.es", params=params)
         items = data.get("result", {}).get("items", [])

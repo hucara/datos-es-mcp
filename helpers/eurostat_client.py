@@ -60,10 +60,10 @@ DATASET_CATALOG: dict[str, dict] = {
         "note": "Annual % change in real GDP per capita. Compare Spain (ES) vs EU27 (EU27_2020).",
     },
     "gdp_per_capita": {
-        "code": "sdg_08_10",
-        "description": "Real GDP per capita growth rate (%)",
-        "unit": "PCH_PRE",
-        "note": "Per-capita GDP growth, useful for purchasing power comparisons.",
+        "code": "tec00114",
+        "description": "GDP per capita in PPS as % of EU average (EU27_2020=100)",
+        "note": "Spain typically 91-92 (gap ~8-9pp vs EU average of 100). Use for convergence/gap claims. geo=ES,EU27_2020,DE,FR",
+        "extra_defaults": {"indic_ppp": "VI_PPS_EU27_2020_HAB", "ppp_cat18": "GDP"},
     },
     "inflation_hicp": {
         "code": "prc_hicp_manr",

@@ -132,10 +132,10 @@ _MINISTERIOS: dict[str, dict[str, Any]] = {
         ],
         "portal_url": "https://www.mivau.gob.es/vivienda/estadisticas-y-publicaciones",
         "ine_operations": [
-            "IPVFN",
+            "IPV",
             "IPVA",
-            "EH",
-        ],  # House price index, rental index, housing survey
+            "HPT",
+        ],  # House price index (IPV), rental index (IPVA), mortgages (HPT)
         "stat_types": {
             "precios_vivienda": {
                 "query": "precio vivienda indice precios IPV compraventa transacciones",
@@ -289,6 +289,64 @@ _MINISTERIOS: dict[str, dict[str, Any]] = {
         "default_stat_type": "criminalidad",
     },
 }
+
+
+def format_results(result: dict, header: str) -> str:
+    """
+    Shared formatter for ministerio tool results.
+
+    Returns a text block listing datasets found, with explicit next-step
+    instructions for retrieving actual data values via list_dataset_resources.
+    """
+    info = result.get("ministerio_info", {})
+    datasets = result.get("results", [])
+    count = result.get("count", 0)
+    page = result.get("page", 1)
+    stat_desc = result.get("stat_description", "")
+
+    lines = [
+        header,
+        f"Portal: {info.get('portal_url', '')}",
+    ]
+    if stat_desc:
+        lines.append(f"Topic: {stat_desc}")
+    lines.append(
+        "\nIMPORTANT: This tool returns dataset references, NOT data values.\n"
+        "To retrieve actual numbers, call:\n"
+        "  list_dataset_resources(dataset_id='<id from result>', include_data=True)\n"
+    )
+    lines.append(f"Found {count} dataset(s) (page {page}, showing {len(datasets)}):\n")
+
+    for i, ds in enumerate(datasets, 1):
+        ds_id = ds.get("id", "")
+        lines.append(f"{i}. {ds.get('title', 'Untitled')}")
+        if ds.get("organization"):
+            lines.append(f"   Publisher: {ds['organization']}")
+        if ds.get("description"):
+            lines.append(f"   Description: {ds['description'][:200]}...")
+        if ds.get("last_modified"):
+            lines.append(f"   Last updated: {ds['last_modified'][:10]}")
+        lines.append(f"   Formats: {', '.join(ds.get('formats', [])) or 'unknown'}")
+        lines.append(f"   Resources: {ds.get('resources_count', 0)} file(s)")
+        for r in (ds.get("resources") or [])[:3]:
+            fmt = r.get("format") or "?"
+            name = r.get("name") or "File"
+            url = r.get("url") or ""
+            if url:
+                lines.append(f"   [{fmt}] {name}: {url}")
+        if ds_id:
+            lines.append(f"   dataset_id: {ds_id}")
+            lines.append(
+                f"   → list_dataset_resources(dataset_id='{ds_id}', include_data=True)"
+            )
+        else:
+            lines.append(f"   URL: {ds.get('url', '')}")
+        lines.append("")
+
+    if not datasets:
+        lines.append("No datasets found. Try a broader stat_type or use custom_query.")
+
+    return "\n".join(lines)
 
 
 def list_ministerios() -> list[str]:

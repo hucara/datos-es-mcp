@@ -230,11 +230,11 @@ Endpoints disponibles:
 
 | Herramienta | Descripción | Parámetros clave |
 |---|---|---|
-| `search_datasets` | Busca en los +90.000 datasets de datos.gob.es por título. Usa la API semántica (`title/{keyword}`): pasa **una sola palabra distintiva** como query (p.ej. `"hipotecas"`, `"afiliados"`, `"IRPF"`). Para publicadores conocidos usa `publisher` con el código de organismo (p.ej. `"EA0028512"` para AEAT). | `query`, `publisher` (código organismo), `page` |
+| `search_datasets` | **Último recurso.** Busca en el catálogo de datos.gob.es por título de dataset. Los datasets están mal etiquetados y los resultados son ruidosos — devuelve referencias a ficheros, no valores. Úsalo solo para instituciones sin herramienta dedicada (CNMV, Tribunal de Cuentas, transferencias de Hacienda) o con `publisher=` para listar datasets de un organismo concreto. | `query`, `publisher` (código organismo), `page` |
 | `get_dataset_info` | Metadatos completos de un dataset: organismo, licencia, cobertura geográfica, frecuencia de actualización y lista de distribuciones. | `dataset_id` |
 | `list_dataset_resources` | Lista todos los ficheros descargables de un dataset con URL, formato, tamaño y fecha. Con `include_data=True` descarga y previsualiza CSV/JSON directamente (hasta `max_file_size_mb`, por defecto 10 MB). | `dataset_id`, `include_data`, `max_file_size_mb` |
 
-> Flujo típico: `search_datasets` → `get_dataset_info` → `list_dataset_resources`
+> Flujo si no existe herramienta dedicada: `search_datasets(publisher='<código>')` → `list_dataset_resources(include_data=True)`
 
 ### INE — Instituto Nacional de Estadística
 
@@ -401,9 +401,9 @@ Esta sección explica cómo usar el servidor de forma eficaz como modelo de IA.
   ├─ Ley en vigor (por nombre) → search_legislation(query=...)  ⚠️ puede dar 500
   └─ BOE de una fecha concreta → get_boe_summary(date="AAAAMMDD")
 
-¿Necesito buscar datasets genéricos?
-  ├─ Búsqueda por tema       → search_datasets(query="palabra_clave_distintiva")
-  └─ Dataset concreto        → search_datasets → get_dataset_info → list_dataset_resources
+¿Necesito un fichero descargable de una institución sin API directa?
+  └─ search_datasets(publisher="<código_organismo>") → list_dataset_resources(include_data=True)
+     ⚠ search_datasets por keyword devuelve resultados poco fiables
 
 ¿Datos meteorológicos?
   ├─ Predicción              → get_weather_forecast(municipality_code=...)
@@ -420,15 +420,19 @@ Esta sección explica cómo usar el servidor de forma eficaz como modelo de IA.
 | BdE BIEST | El parámetro `time_range` debe coincidir con la frecuencia de la serie (diaria vs. mensual); una discordancia devuelve 412 | Usa `latest_only=True` primero para comprobar la frecuencia |
 | REData | `time_trunc="year"` acepta máx. 3 años; `time_trunc="month"` acepta máx. 2 años para algunos widgets | Ajusta el rango de fechas al límite del widget |
 
-### Consejos para `search_datasets`
+### Consejos para `search_datasets` (último recurso)
 
-La API semántica de datos.gob.es busca por **coincidencia de título**. El cliente extrae automáticamente la primera palabra no genérica de tu consulta y la usa como keyword. Funciona mejor con sustantivos específicos:
+Los datasets de datos.gob.es están **mal etiquetados**: la búsqueda por título devuelve resultados ruidosos e irrelevantes en la mayoría de casos. Usa siempre la herramienta dedicada de la fuente antes de recurrir a `search_datasets`.
+
+Cuándo sí tiene sentido usarlo:
+- Con `publisher=` para listar todos los datasets de un organismo concreto (más fiable que keyword)
+- Para instituciones sin herramienta dedicada (CNMV, Tribunal de Cuentas, Hacienda transfers)
 
 ```
-✅ Bien:  "hipotecas"      → title/hipotecas.json
-✅ Bien:  "afiliados"      → title/afiliados.json
-✅ Bien:  "IRPF declarantes" → title/IRPF.json
-❌ Evitar: "estadisticas precio vivienda"  → la primera palabra no genérica es "vivienda"
+✅ Bien:  search_datasets(publisher="EA0028512")   → todos los datasets de AEAT
+✅ Bien:  search_datasets(publisher="gobierno-vasco")  → datos abiertos del País Vasco
+❌ Evitar: search_datasets(query="gasto sanitario")  → resultados aleatorios
+❌ Evitar: cuando existe get_health_stats / get_eurostat_data / query_ine_data
 ```
 
 ### Consejos para `get_bde_series`

@@ -16,16 +16,53 @@ def register_get_ine_operations_tool(mcp: FastMCP) -> None:
         Results are served from a 24-hour cache after the first call.
         Use this to discover operation codes before calling query_ine_data.
 
-        Common operations:
-        - IPC: Índice de Precios de Consumo (Consumer Price Index)
-        - EPA: Encuesta de Población Activa (Labour Force Survey)
-        - CN: Contabilidad Nacional (National Accounts / GDP)
-        - PADRON: Padrón Municipal (Municipal Register — population by municipality)
-        - EPNFL: Estadística de Nacimientos (Birth Statistics)
-        - DEFUN: Estadística de Defunciones (Death Statistics)
+        Quick reference — use these codes directly with query_ine_data without
+        calling get_ine_operations first:
+
+        Prices / Economy:
+          IPC      — Índice de Precios de Consumo (CPI, monthly)
+          IPCA     — IPCA armonizado (HICP, monthly EU-comparable)
+          CNE / CN — Contabilidad Nacional de España (GDP, quarterly & annual)
+          CNTR     — Contabilidad Nacional Trimestral (flash GDP estimates)
+
+        Labour / Employment:
+          EPA      — Encuesta de Población Activa (LFS, quarterly unemployment)
+          ETCL     — Encuesta Trimestral de Coste Laboral (labour cost, quarterly)
+          EACL     — Encuesta Anual de Coste Laboral (annual labour cost)
+          EAES     — Encuesta Anual de Estructura Salarial (wage structure, salarios por sector)
+          EAES:Q   — Encuesta Cuatrienal de Estructura Salarial (4-yearly detailed wage survey)
+
+        Population / Demographics:
+          DPOP     — Cifras Oficiales de Población / Revisión del Padrón Municipal (annual)
+          MNPN     — MNP Estadística de Nacimientos (births)
+          MNPD     — MNP Estadística de Defunciones (deaths)
+          MNPM     — MNP Estadística de Matrimonios (marriages)
+          EM       — Estadística de Migraciones (immigration/emigration flows; search "migraciones" not "inmigración")
+          EMCR     — Estadística de Migraciones y Cambios de Residencia
+
+        Housing / Prices:
+          IPV      — Índice de Precios de la Vivienda (House Price Index, quarterly)
+          IPVA     — Índice de Precios de Vivienda en Alquiler (rental price index)
+          HPT      — Estadística de Hipotecas (mortgages, monthly)
+          ETDP     — Estadística de Transmisión de Derechos de la Propiedad (property sales)
+
+        Health / Social:
+          ECV      — Encuesta de Condiciones de Vida (poverty & living standards, annual)
+          EPF      — Encuesta de Presupuestos Familiares (household budgets, annual)
+          IMCV     — Indicador Multidimensional de Calidad de Vida
+
+        Business:
+          ICNE     — Índice de Cifra de Negocios Empresarial
+          DIR      — Explotación Estadística del Directorio Central de Empresas (annual)
+
+        NOTE: CIS (Centro de Investigaciones Sociológicas) surveys are NOT INE operations
+        and are not available via this tool. Use search_datasets(query="CIS barómetro")
+        to find CIS microdata files on datos.gob.es.
 
         Args:
             search: Optional keyword filter applied to operation names and codes.
+                    Use short keywords (e.g. "nacimientos", "IPC") not full sentences.
+                    For wages/salaries use "salarial" not "salario" (INE uses "Salarial").
             page: Page number (default: 1, 50 results per page).
         """
         _urls: list[str] = []

@@ -51,41 +51,41 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
         page_size: int = 20,
     ) -> str:
         """
-        Search for datasets in the datos.gob.es catalog (90,000+ Spanish open datasets).
+        LAST RESORT: Search the datos.gob.es catalog by dataset title.
 
-        This is the starting point for discovering Spanish public data.
-        The API searches by title keyword, so use a single distinctive noun
-        (e.g. "hipotecas", "IRPF", "afiliados") rather than multi-word phrases.
-        Generic words like "datos", "precio", "estadistica" are automatically
-        skipped to find a more specific keyword.
+        WARNING: datos.gob.es datasets are poorly tagged and the title-keyword search
+        returns noisy, often irrelevant results. This tool finds dataset references
+        (titles + download links), NOT actual data values.
 
-        For data from specific well-known sources use dedicated tools instead:
-          - INE data     → get_ine_operations + query_ine_data
-          - BdE rates    → get_bde_series
-          - Eurostat     → get_eurostat_data
-          - AEAT fiscal  → get_aeat_stats
-          - Ministerios  → get_housing_stats / get_health_stats / get_social_security_stats / etc.
-          - REData energy → get_energy_data
-          - BOE/Legislación → get_boe_summary / search_legislation
+        Use dedicated tools instead whenever possible — they hit real APIs and return numbers:
+          - INE statistics   → query_ine_data(operation_code=...) [IPC, EPA, CNE, MNP, IPVFN, ...]
+          - BdE rates        → get_bde_series
+          - Eurostat         → get_eurostat_data
+          - AEAT fiscal      → get_aeat_stats
+          - Health stats     → get_health_stats
+          - Education stats  → get_education_stats
+          - Housing stats    → get_housing_stats
+          - SS/pensions      → get_social_security_stats
+          - Traffic (DGT)    → get_traffic_stats
+          - Justice (CGPJ)   → get_justice_stats
+          - Energy (REData)  → get_energy_data
+          - BOE/legislation  → get_boe_summary / search_legislation
+
+        Use this tool ONLY when:
+          - The institution has no dedicated tool (e.g. CNMV, Tribunal de Cuentas, Hacienda transfers)
+          - Searching by publisher= code to list all datasets from a specific organisation
+          - Explicitly looking for a downloadable bulk file (CSV/XLSX) to inspect
 
         Args:
-            query: Search keyword or phrase. The first distinctive word is used
-                   for title matching (e.g. "hipotecas vivienda" → searches "hipotecas").
-                   Good examples: "IRPF", "afiliados", "hipotecas", "contaminacion",
-                   "matriculaciones", "licitaciones".
-            theme: NTI sector filter (ignored by current API — pass None).
-            publisher: Publisher code on datos.gob.es (e.g. "EA0028512" for AEAT,
-                       "EA0010587" for INE). If provided, lists all datasets from
-                       that publisher instead of doing a title search.
-            format: Ignored by current API — filter results manually if needed.
+            query: Single distinctive keyword — the API matches against dataset titles only.
+                   Multi-word phrases are reduced to the first non-generic word.
+            publisher: Publisher code on datos.gob.es. When provided, returns all datasets
+                       from that publisher (ignores query). More reliable than keyword search.
+                       Known codes: EA0028512=AEAT, EA0010587=INE
+            theme: Ignored by current API.
+            format: Ignored by current API.
             page: Page number (default: 1).
             page_size: Results per page (default: 20, max: 100).
-
-        Typical workflow: search_datasets → get_dataset_info → list_dataset_resources.
-
-        Known publisher codes:
-          EA0028512 — AEAT (Agencia Tributaria)
-          EA0010587 — INE (Instituto Nacional de Estadística)
         """
         _urls: list[str] = []
         url_capture.set(_urls)

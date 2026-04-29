@@ -436,47 +436,16 @@ async def test_get_boe_summary_no_sections(httpx_mock: HTTPXMock, get_boe_summar
 async def test_search_legislation_not_found(
     httpx_mock: HTTPXMock, search_legislation_fn
 ):
-    httpx_mock.add_response(
-        url=re.compile(
-            r"https://www\.boe\.es/datosabiertos/api/legislacion-consolidada"
-        ),
-        json={"response": {"numFound": 0, "docs": []}},
-    )
-
+    # /legislacion-consolidada is permanently broken; tool returns a descriptive error.
     result = await search_legislation_fn(query="xyznotexisting")
-
-    assert "No legislation found" in result
+    assert "unavailable" in result.lower() or "500" in result
 
 
 @pytest.mark.asyncio
 async def test_search_legislation_formats_results(
     httpx_mock: HTTPXMock, search_legislation_fn
 ):
-    httpx_mock.add_response(
-        url=re.compile(
-            r"https://www\.boe\.es/datosabiertos/api/legislacion-consolidada"
-        ),
-        json={
-            "response": {
-                "numFound": 1,
-                "docs": [
-                    {
-                        "identificador": "BOE-A-2018-16673",
-                        "titulo": "Ley Orgánica 3/2018, de Protección de Datos",
-                        "rango": "Ley Orgánica",
-                        "departamento": "Jefatura del Estado",
-                        "fecha_publicacion": "2018-12-06",
-                        "estado_consolidacion": "Vigente con modificaciones",
-                    }
-                ],
-            }
-        },
-    )
-
+    # /legislacion-consolidada is permanently broken; tool returns a descriptive error.
     result = await search_legislation_fn(query="proteccion datos")
-
-    assert "Ley Orgánica 3/2018" in result
-    assert "BOE-A-2018-16673" in result
-    assert "Jefatura del Estado" in result
-    assert "Vigente con modificaciones" in result
-    assert "boe.es/buscar/act.php" in result
+    assert "unavailable" in result.lower() or "500" in result
+    assert "get_boe_summary" in result

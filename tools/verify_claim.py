@@ -205,9 +205,9 @@ _ROUTING_RULES: list[dict] = [
                 "rationale": "Eurostat earnings statistics. Compare Spain vs EU purchasing power.",
             },
             {
-                "tool": "search_datasets",
-                "args": {"query": "encuesta anual estructura salarial INE"},
-                "rationale": "INE Encuesta Anual de Estructura Salarial — official wage distribution.",
+                "tool": "query_ine_data",
+                "args": {"operation_code": "EEES"},
+                "rationale": "INE Encuesta Anual de Estructura Salarial (EEES) — official wage distribution by sector, occupation, sex.",
             },
             {
                 "tool": "get_aeat_stats",
@@ -840,11 +840,9 @@ _ROUTING_RULES: list[dict] = [
                 "rationale": "INE Movimiento Natural de la Población (MNP) — births, deaths, marriages. Annual and monthly data.",
             },
             {
-                "tool": "search_datasets",
-                "args": {
-                    "query": "estadistica nacimientos defunciones demografica INE"
-                },
-                "rationale": "INE demographic datasets on datos.gob.es — downloadable microdata and summary tables.",
+                "tool": "query_ine_data",
+                "args": {"operation_code": "EMR"},
+                "rationale": "INE Estadística de Migraciones (EMR) — immigration and emigration flows by nationality.",
             },
         ],
         "verification_notes": (
@@ -868,10 +866,8 @@ _ROUTING_RULES: list[dict] = [
         "category": "Business Structure",
         "sources": [
             {
-                "tool": "search_datasets",
-                "args": {
-                    "query": "directorio central empresas DIRCE INE estructura empresarial"
-                },
+                "tool": "query_ine_data",
+                "args": {"operation_code": "DIRCE"},
                 "rationale": "INE DIRCE (Directorio Central de Empresas) — official business census by size, sector, region.",
             },
             {
@@ -1082,20 +1078,16 @@ _ENTITY_HINTS: dict[str, list[dict]] = {
     ],
     "enfermería": [
         {
-            "tool": "search_datasets",
-            "args": {
-                "query": "profesionales sanitarios enfermeras ministerio sanidad SIAP"
-            },
-            "rationale": "Ministerio de Sanidad SIAP tracks active healthcare professionals by category.",
+            "tool": "get_health_stats",
+            "args": {"stat_type": "profesionales"},
+            "rationale": "Ministerio de Sanidad SIAP — active healthcare professionals (doctors, nurses, specialists) by CCAA.",
         },
     ],
     "ministerio de sanidad": [
         {
-            "tool": "search_datasets",
-            "args": {
-                "query": "estadisticas sanitarias recursos humanos ministerio sanidad"
-            },
-            "rationale": "Ministerio de Sanidad publishes workforce and activity statistics (SNS).",
+            "tool": "get_health_stats",
+            "args": {"stat_type": "profesionales"},
+            "rationale": "Ministerio de Sanidad SNS workforce statistics via datos.gob.es.",
         },
     ],
     "aeat": [
@@ -1142,11 +1134,9 @@ _ENTITY_HINTS: dict[str, list[dict]] = {
     ],
     "ministerio de educación": [
         {
-            "tool": "search_datasets",
-            "args": {
-                "query": "estadistica educacion abandono escolar ministerio educacion"
-            },
-            "rationale": "Ministerio de Educación publishes annual education statistics.",
+            "tool": "get_education_stats",
+            "args": {"stat_type": "abandono_escolar"},
+            "rationale": "Ministerio de Educación annual education statistics via datos.gob.es.",
         },
     ],
 }
@@ -1621,9 +1611,10 @@ def register_verify_claim_tool(mcp: FastMCP) -> None:
             lines += [
                 "⚠  Esta afirmación no pudo clasificarse automáticamente.",
                 "   Approach sugerido:",
-                f'  1. search_datasets(query="{fallback_q}")',
+                "  1. Identifica la institución fuente (INE, BdE, Eurostat, ministerio…) y usa su herramienta dedicada.",
                 "  2. search_legislation o get_boe_summary — para afirmaciones legales",
                 "  3. get_eurostat_data(topic='gdp_growth') — para contexto macroeconómico",
+                f'  4. Como último recurso: search_datasets(query="{fallback_q}") — resultados poco fiables',
                 "",
                 "Portales de verificación manual:",
                 "  • datos.gob.es — catálogo nacional",

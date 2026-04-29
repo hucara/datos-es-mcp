@@ -75,14 +75,7 @@ async def test_get_boe_summary(httpx_mock: HTTPXMock, sample_boe_summary):
 
 @pytest.mark.asyncio
 async def test_search_legislation(httpx_mock: HTTPXMock, sample_legislation_search):
-    httpx_mock.add_response(
-        url=re.compile(
-            r"https://www\.boe\.es/datosabiertos/api/legislacion-consolidada"
-        ),
-        json=sample_legislation_search,
-    )
-
-    result = await search_legislation("proteccion datos")
-
-    assert result["response"]["numFound"] == 1
-    assert result["response"]["docs"][0]["identificador"] == "BOE-A-2018-16673"
+    # /legislacion-consolidada is permanently broken (HTTP 500); search_legislation
+    # raises RuntimeError immediately without making an HTTP call.
+    with pytest.raises(RuntimeError, match="legislacion-consolidada"):
+        await search_legislation("proteccion datos")

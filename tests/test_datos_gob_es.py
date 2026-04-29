@@ -86,14 +86,19 @@ async def test_search_datasets_empty(httpx_mock: HTTPXMock):
 
 @pytest.mark.asyncio
 async def test_get_dataset_details(httpx_mock: HTTPXMock):
-    # First attempt: publisher lookup fails (returns empty)
+    # First attempt: direct slug lookup returns 404 (endpoint may not exist)
+    httpx_mock.add_response(
+        url=re.compile(r"https://datos\.gob\.es/apidata/catalog/dataset/padron\.json"),
+        status_code=404,
+    )
+    # Second attempt: publisher lookup fails (returns empty)
     httpx_mock.add_response(
         url=re.compile(
             r"https://datos\.gob\.es/apidata/catalog/dataset/publisher/padron"
         ),
         json=_semantic_response([]),
     )
-    # Second attempt: title lookup succeeds
+    # Third attempt: title lookup succeeds
     httpx_mock.add_response(
         url=re.compile(r"https://datos\.gob\.es/apidata/catalog/dataset/title/padron"),
         json=_semantic_response([_SAMPLE_ITEMS[0]]),
