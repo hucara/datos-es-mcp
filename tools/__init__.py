@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
 from tools.get_aeat_stats import register_get_aeat_stats_tool
+from tools.get_airef_data import register_get_airef_data_tool
 from tools.get_bde_series import register_get_bde_series_tool
 from tools.get_boe_summary import register_get_boe_summary_tool
 from tools.get_cnmc_data import register_get_cnmc_data_tool
@@ -60,6 +61,8 @@ def register_tools(mcp: FastMCP) -> None:
     register_get_eurostat_data_tool(mcp)
     # AEAT — fiscal and tax statistics
     register_get_aeat_stats_tool(mcp)
+    # AIReF — independent fiscal watchdog forecasts and spending reviews
+    register_get_airef_data_tool(mcp)
     # Ministerio de Sanidad / SNS — public health statistics
     register_get_health_stats_tool(mcp)
     # Ministerio de Educación y FP — education statistics
